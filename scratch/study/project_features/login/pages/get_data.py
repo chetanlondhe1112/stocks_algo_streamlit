@@ -38,7 +38,6 @@ for i in tickers:
     except Exception as e:
         
         print(e)
-    
     end = time.time()
     print(end - start) #     <-----NOTE Hashed
     print(i,"done") #       <-----NOTE Hashed
