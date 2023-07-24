@@ -17,7 +17,6 @@ from functions.db_conn import sqlalchemy_connect
 import datetime as dt
 
 
-
 # Database Connection 
 sql=sqlalchemy_connect(username="chetan")
 
@@ -29,23 +28,40 @@ candle_stick_tbl=db_tables["candle_stick_log_table"]
 entry_conditions=db_tables["entry_conditions"]
 order_log_table=db_tables["order_log_table"]
 # functions
+# defaults
+countt = 0
+apikey = 'DodjVpCE' # Sridharan knsridharan@winrich.in
+#username = 'k31094'
+#pwd = 'KnsAng@12#'
+#pwd = '1985'
+#kiteSetupKeyForTOTP = 'ZT4OKWGC3TXIRPRZJLDKX3IBCM'
+expiry = date(2023, 6, 29) # For Future
+#time_15_15 = datetime.time(15,15)
 
-def angelbrok_login(api_key,angel_user,angel_pwd,totp_key):   
+# pdb.set_trace()
+exch_seg = "NFO"
+fin_quantity = 25
+# fin_quantity = 125
+fin_q = str(fin_quantity)
+
+
+def angelbrok_obj(apiky):
+	return SmartConnect(api_key=apikey) # Sridharanss
+
+def angelbrok_login(angel_obj,angel_user,angel_pwd,totp_key):   
 	try:
                 
 		global feed_token, client_code, obj, obj3, obj4, obj5, obj6, obj7, obj8, obj9, obj10, obj11, obj12, obj13, obj14, obj16, obj17, obj20, obj21, obj22, obj23, password, refreshToken, accessToken, data
 		
 		countt = 0
 		countt = countt+1
-
-		apikey = api_key
 		username = angel_user
 		#pwd = 'KnsAng@12#'
 		pwd = angel_pwd
 		kiteSetupKeyForTOTP = totp_key
 		totp = pyotp.TOTP(kiteSetupKeyForTOTP)
 		totp = totp.now()
-		obj=SmartConnect(api_key=apikey) # Sridharan
+		obj=angel_obj
 		data = obj.generateSession(username,pwd,totp)
 		refreshToken= data['data']['refreshToken']
 		#fetch the feedtoken
@@ -61,7 +77,7 @@ def angelbrok_login(api_key,angel_user,angel_pwd,totp_key):
         
 def customer_data():
 	all_cust={}
-	customer_table_df=sql.fetch_tables(table_name=customer_tbl)[["name","angel_user","angel_pwd"]]
+	customer_table_df=sql.fetch_tables(table_name=customer_tbl)[["name","angel_user","angel_pwd","totpkey"]]
 	
 	for i in range(len(customer_table_df)):
 		cus_df=customer_table_df.iloc[i].to_dict()
@@ -71,13 +87,14 @@ def customer_data():
 	return all_cust
 
 def get_obj(customer_dict=dict):
-
+	obj=angelbrok_obj(apiky=apikey)
 	for i in customer_dict:
 		username = customer_dict[i]['angel_user']
 		pwd = customer_dict[i]["angel_pwd"]
-		print(username,pwd)
+		totp_key=customer_dict[i]["totpkey"]
+		print(username,pwd,totp_key)
 		try:
-			totp,obj=angelbrok_login(apikey,angel_user=username,angel_pwd=pwd,totp_key=kiteSetupKeyForTOTP)
+			totp,obj=angelbrok_login(angel_obj=obj,angel_user=username,angel_pwd=pwd,totp_key=totp_key)
 			print(totp,obj)
 			customer_dict[i]["totp"]=int(totp)
 			customer_dict[i]["obj"]=obj
@@ -90,9 +107,10 @@ def get_obj(customer_dict=dict):
 	print("\nCustomer dictionary with object and totp\n",customer_dict)
 	return customer_dict
 
-def getTokenInfo (token_df,symbol, exch_seg ='NSE', instrumenttype='OPTIDX',strike_price = '',pe_ce = '',expiry_day = None):
+
+def getTokenInfo (symbol, exch_seg ='NSE',instrumenttype='OPTIDX',strike_price = '',pe_ce = '',expiry_day = None):
 	# pass
-	df = token_df
+	df= token_generation()
 	strike_price = strike_price*100
 	if exch_seg == 'NSE':
 		eq_df = df[(df['exch_seg'] == 'NSE') ]
@@ -100,7 +118,9 @@ def getTokenInfo (token_df,symbol, exch_seg ='NSE', instrumenttype='OPTIDX',stri
 	elif exch_seg == 'NFO' and ((instrumenttype == 'FUTSTK') or (instrumenttype == 'FUTIDX')):
 		return df[(df['exch_seg'] == 'NFO') & (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol)].sort_values(by=['expiry'])
 	elif exch_seg == 'NFO' and (instrumenttype == 'OPTSTK' or instrumenttype == 'OPTIDX'):
-		return df[(df['exch_seg'] == 'NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry'])
+		df=df[(df['exch_seg'] == 'NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry'])
+		print("\nfetched token\n",df)
+		return df
 
 def historic_data(object):
 	try:
@@ -123,7 +143,6 @@ def get_key(val):
 		if str(val)==str(value):
 			return key
 		
-
 def obj_ls_di(cus_obj_dict=dict):
 	obj_list =[] 
 	obj_dict ={}
@@ -134,20 +153,7 @@ def obj_ls_di(cus_obj_dict=dict):
 	print("\nobj dict\n",obj_dict)
 	return obj_list,obj_dict
 
-# Token Genearation
-def token_generation():
-	url = 'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json'
-	d = requests.get(url).json()
-	token_df = pd.DataFrame.from_dict(d)
-	token_df['expiry'] = pd.to_datetime(token_df['expiry']).apply(lambda x: x.date())
-	token_df = token_df.astype({'strike': float})
-	# token_df
-	token_df1= token_df[(token_df['name'] == 'BANKNIFTY') & (token_df['instrumenttype'] == 'OPTIDX') & (token_df['expiry']==expiry) ]
-	print("\n Token Generation df\n",token_df)
 
-	print("\n Token Generation df1\n",token_df1)
-
-	return token_df,token_df1
 
 def get_instruments():
 	global instrument_df
@@ -178,25 +184,110 @@ def get_token_and_exchange(name): # get_token_and_exchange('BANKNIFTY27OCT22FUT'
 	return symboltoken, exchange
 
 
-# defaults
-countt = 0
-apikey = 'DodjVpCE' # Sridharan knsridharan@winrich.in
-kiteSetupKeyForTOTP = 'ZT4OKWGC3TXIRPRZJLDKX3IBCM'
-#username = 'k31094'
-#pwd = 'KnsAng@12#'
-#pwd = '1985'
-#kiteSetupKeyForTOTP = 'ZT4OKWGC3TXIRPRZJLDKX3IBCM'
-expiry = date(2023, 6, 29) # For Future
-#time_15_15 = datetime.time(15,15)
+def angel_place_order(obj,transaction_type, tsymbol, ttoken,fin_q): # Change Product type to MIS ----> INTRADAY (from ---> CARRYFORWARD )
+	global orderparams
+	
+	#obj_l=list(obj_dict)# update this for each customer object collected from obj dict
 
+	orderparams = {"variety": "NORMAL", "tradingsymbol": tsymbol, "symboltoken": ttoken, "transactiontype": transaction_type, 
+	"exchange": exch_seg, "ordertype": "MARKET", "producttype": "CARRYFORWARD", "duration": "DAY", "price": "0", "squareoff": "0", 
+	"stoploss": "0", "quantity": fin_q }# only fin q will change as per customer need to put in loop for every customer
 
-#customer all data
+	name=obj
+	# pdb.set_trace()
+	try:					
+		# Need to add looping over customers object									
+		orderId=name.placeOrder(orderparams) # populate the customer dictionary with order id
+		print(get_key(name))
+		print(tsymbol, " The order id is: {}".format(orderId))
+		time_now = datetime.datetime.now().time().replace(microsecond=0)
+		trade_dict_11 = {"time": time_now}
+		print(trade_dict_11)
+		print(time_now)
+		print("\n")
+					
+
+	except Exception as e:			
+		print("\n")
+		print(obj_dict[name], " ---> Order placement subset failed: for ", tsymbol)
+		time_now = datetime.datetime.now().time().replace(microsecond=0)
+		order_fail={"time":time_now, "name":obj_dict[name], "symbol":tsymbol}
+		print(time_now)
+		print("\n")
+
+# pdb.set_trace()
+def order_status(obj):
+	try:
+		Trade_net = obj.position()['data'] # Angel Trade Net Positions
+		nobj = get_key(obj)
+		Trade_df=pd.DataFrame(Trade_net)
+		Angel_net_df = Trade_df[Trade_df['symbolname']=='BANKNIFTY']
+		Angel_net_df.to_csv("Angel_net_positions_" + obj_dict[name]+".csv")
+		
+	except Exception as e:
+		print(" ---> Order net positions subset csv file creation failed for :  ", nobj)
+		print("\n")
+
+def roundup(x):
+	return x if x % 100 == 0 else x + 100 - x % 100
+
+def get_symbol(bnf_ltp):
+	 
+	max_level=bnf_ltp
+	min_level=bnf_ltp
+	print(max_level)
+	print(int(roundup(max_level)))
+	strikec = (int(roundup(max_level)))
+	strike_call = strikec - 300 
+	print(strike_call)
+	print("\n")
+	print(min_level)
+	print(int(roundup(min_level)))
+	strikep = (int(roundup(min_level)))
+	strike_put= strikep + 300 
+	print(strike_put)
+
+	#expiry_day = datetime.date(2023,5,25) #<------------------------Change every Week ----------------------->
+	expiry_day = dt.date(2023,7,27) #praveen- change expiry every week before friday start# need to work with dashbboard  
+	ATMStrike1 = strike_call
+	ATMStrike2 = strike_put
+	# expiry_day = expiry
+	symbol = 'BANKNIFTY'
+	
+	ce_strike_symbolatm = getTokenInfo(symbol,'NFO','OPTIDX',ATMStrike1,'CE',expiry_day).iloc[0]
+	pe_strike_symbolatm = getTokenInfo(symbol,'NFO','OPTIDX',ATMStrike2,'PE',expiry_day).iloc[0]
+	ltpatmce=obj.ltpData('NFO',ce_strike_symbolatm['symbol'],ce_strike_symbolatm['token']) # obj made to obj1
+	ltpatmpe=obj.ltpData('NFO',pe_strike_symbolatm['symbol'],pe_strike_symbolatm['token'])
+
+	CE_Symbol = ce_strike_symbolatm['symbol']
+	CE_Token = ce_strike_symbolatm['token']
+	print(CE_Symbol, ",", CE_Token, " LTP = ", ltpatmce )
+
+	PE_Symbol = pe_strike_symbolatm['symbol']
+	PE_Token = pe_strike_symbolatm['token']
+	print(PE_Symbol, ",", PE_Token, " LTP = ", ltpatmpe)
+
+	df_log = pd.read_csv('angel_trade_log_list.csv', index_col=0)
+	
+	symbol_log_dict = df_log.to_dict('records')[0]
+	# {'CE_Symbol': 'BANKNIFTY27APR2339800CE', 'CE_Token': 53304, 'PE_Symbol': 'BANKNIFTY27APR2338700PE', 'PE_Token': 53277, 'fin_q': 25}
+	symbol_log_dict.update({"CE_Symbol":CE_Symbol, "CE_Token":CE_Token, "PE_Symbol":PE_Symbol, "PE_Token":PE_Token, "bnf_ltp":bnf_ltp})
+	print(symbol_log_dict)
+	trade_list1=[]
+	trade_list1.append(symbol_log_dict)
+	df_tl = pd.DataFrame(trade_list1)
+	df_tl.to_csv("angel_trade_log_list.csv")
+	return strike_put,strike_call, CE_Symbol, CE_Token, PE_Symbol, PE_Token
+
+	
+# customer all data
 all_cust=customer_data()
 
 all_cust=get_obj(customer_dict=all_cust)	#updated dictionary with objects
 
 obj_list,obj_dict=obj_ls_di(cus_obj_dict=all_cust)
 
+bnf_ltp = obj.ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
 
 # Entry conditions read
 #entry_con_df = pd.read_csv('Entry_conditions.csv', index_col=0)
@@ -217,24 +308,24 @@ print("check obj")
 
 trade_inf={}
 
-choice=0
 time_15_15 = dt.time(15,15)
 print(time_15_15)
 
+
+print("\nEntry conditions last date: ")
 print(entry_con_df.iloc[-1]['Start Date'].date())
 print(entry_con_df.iloc[-1]['Entry Above High'])
 print(entry_con_df.iloc[-1]['Entry Below Low'])
+today = date.today()
+
 #pdb.set_trace()
-"""
+choice=0
 print("Collecting LTP values....")
 while True:
-	today = date.today()
 	obj=obj_list[1]
 	#for obj in obj_list:
 	if  entry_con_df.iloc[-1]['Start Date'].date()==today:
-		#bnf_ltp = obj.ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
-
-		bnf_ltp=44706
+		#bnf_ltp=44706
 		print(bnf_ltp)
 		time.sleep(1)
 		if bnf_ltp>entry_con_df.iloc[-1]['Entry Above High']:
@@ -247,7 +338,7 @@ while True:
 			print("target_buy=",target_buy)
 			print("choice=",choice)
 			break
-		if bnf_ltp<entry_con_df.iloc[-1]['Entry Below Low']:
+		elif bnf_ltp<entry_con_df.iloc[-1]['Entry Below Low']:
 			print("selling BANKNIFTY")
 			print(entry_con_df.iloc[-1]['Entry Below Low'])
 			stop_loss_sell=entry_con_df.iloc[-1]['Stop Loss Below Entry']
@@ -257,27 +348,26 @@ while True:
 			print("target_sell=",target_sell)
 			print("choice=",choice)
 			break
-		
+		else:
+			break
 	else:
 		break
 
 print(obj_dict)
-"""
 """
 dat=historic_data(object=obj)
 
 new = pd.DataFrame.from_dict(dat['data'])
 new.to_csv("new_ang.csv")
 print(new)
-"""
-"""	
+
+	
 xval = make_straddle('BANKNIFTY', '29MAR23', 100)
 print(xval)
 instrument_df = get_instruments()
 print(instrument_df)
 """
 # pdb.set_trace()
-
 print(obj_list)
 for name in obj_list:
 	print(type(name))
@@ -316,94 +406,72 @@ for name in obj_list:
 		sql.upload_to_table(angel_up,order_log_table,"append")
 		print("angel trade\n")
 		print(angel_up)
-		
-"""
-# pdb.set_trace()
-def angel_place_order(transaction_type, tsymbol, ttoken): # Change Product type to MIS ----> INTRADAY (from ---> CARRYFORWARD )
-	global orderparams
-	
-	orderparams = {"variety": "NORMAL", "tradingsymbol": tsymbol, "symboltoken": ttoken, "transactiontype": transaction_type, 
-	"exchange": exch_seg, "ordertype": "MARKET", "producttype": "CARRYFORWARD", "duration": "DAY", "price": "0", "squareoff": "0", 
-	"stoploss": "0", "quantity": fin_q }
-
-			print(get_key(name))
-			print(tsymbol, " The order id is: {}".format(orderId))
-			time_now = datetime.datetime.now().time().replace(microsecond=0)
-			trade_dict_11 = {"time": time_now}
-			print(trade_dict_11)
-			print(time_now)
-			print("\n")
-						
-
-		except Exception as e:			
-			print("\n")
-			print(obj_dict[name], " ---> Order placement subset failed: for ", tsymbol)
-			time_now = datetime.datetime.now().time().replace(microsecond=0)
-			order_fail={"time":time_now, "name":obj_dict[name], "symbol":tsymbol}
-			print(time_now)
-			print("\n")
-
-
-
-# pdb.set_trace()
-exch_seg = "NFO"
-fin_quantity = 25
-# fin_quantity = 125
-fin_q = str(fin_quantity)
-
+'''		
 df_log = pd.read_csv('angel_trade_log_list.csv') # Take the source fike for Strikes symbol  and Token selected
 CE_Symbol = df_log.iloc[0]['CE_Symbol']
 CE_Token = str(df_log.iloc[0]['CE_Token'])
 
 PE_Symbol = df_log.iloc[0]['PE_Symbol']
-PE_Token = str(df_log.iloc[0]['PE_Token'])
+PE_Token = str(df_log.iloc[0]['PE_Token'])'''
+
+strike_put,strike_call, CE_Symbol, CE_Token, PE_Symbol, PE_Token=get_symbol(bnf_ltp=bnf_ltp)
 
 #pdb.set_trace()
+
 while True:	
 	print("\n")
 	# pdb.set_trace()
 	print(CE_Symbol, " , ",  PE_Symbol)
 	#val = input("Enter your trade action value (1)Buy Call , (2)Buy Put,  (3)Sell Call , (4)Sell Put , (5) EXIT loop : ----> ")
-	print("Enter your trade action value (1)Buy Call , (2)Buy Put,  (3)Sell Call , (4)Sell Put , (5) EXIT loop : ----> ")
+	#print("Enter your trade action value (1)Buy Call , (2)Buy Put,  (3)Sell Call , (4)Sell Put , (5) EXIT loop : ----> ")
 	val=choice
 	
 	print("You have chosen ---> ", val)
 	print("\n")
 	# pdb.set_trace()
-
-	if val == "1":	
-		# transaction_type = "BUY"
-		print('Buying CALL ----> ')
-		# pdb.set_trace()
-		#angel_place_order("BUY", CE_Symbol, CE_Token)
-		break
-	elif val == "2":	
-		# transaction_type = "BUY"
-		print('Buying PUT ----> ')
-		#angel_place_order("BUY", PE_Symbol, PE_Token)
-		break
-	elif val == "3":	
-		# transaction_type = "SELL"
-		print('Selling CALL ----> ')
-		#angel_place_order("SELL", CE_Symbol, CE_Token)
-		break
-	elif val == "4":	
-		# transaction_type = "SELL"
-		print('Selling PUT ----> ')
-		#angel_place_order("SELL", PE_Symbol, PE_Token)
-		break
-	elif val == "1" or val == "2" or val == "3" or val == "4":
-		print("\n")
-		print("exiting Loop")
-		break
-		#break	
-	else:
-		print("\n")
-		print("Wrong Entry  ---> Please retry ")
-		# break
-		# pdb.set_trace()
-
-
+	for obj in obj_list:
+		print(get_key(obj))	
+		print(obj)
+		if val == "1":	
+			# transaction_type = "BUY"
+			print('Buying CALL ----> ')
+			# pdb.set_trace()
+			angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=)
+			time.sleep(3)
+			order_status(obj=obj)
+			break
+		elif val == "2":	
+			# transaction_type = "BUY"
+			print('Buying PUT ----> ')
+			#angel_place_order("BUY", PE_Symbol, PE_Token)
+			time.sleep(3)
+			order_status(obj=obj)
+			break
+		elif val == "3":	
+			# transaction_type = "SELL"
+			print('Selling CALL ----> ')
+			#angel_place_order("SELL", CE_Symbol, CE_Token)
+			time.sleep(3)
+			order_status(obj=obj)
+			break
+		elif val == "4":	
+			# transaction_type = "SELL"
+			print('Selling PUT ----> ')
+			#angel_place_order("SELL", PE_Symbol, PE_Token)
+			time.sleep(3)
+			order_status(obj=obj)
+			break
+		elif val == "1" or val == "2" or val == "3" or val == "4":
+			print("\n")
+			print("exiting Loop")
+			break
+			#break	
+		else:
+			print("\n")
+			print("Wrong Entry  ---> Please retry ")
+			# break
+			# pdb.set_trace()
+"""
 while True:
 	bnf_ltp = obj.ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
 	#bnf_ltp=44263
@@ -464,6 +532,6 @@ while True:
 			print("EOD Reached")
 			#angel_place_order("SELL", PE_Symbol, PE_Token)
 			break
-sys.exit()
+sys.exit()"""
 
-"""
+

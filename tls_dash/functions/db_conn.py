@@ -119,3 +119,11 @@ class sqlalchemy_connect:
             return True
         except Exception as e:
             print(e)
+
+    def ohlc_validation(self):
+        """
+            Validationn ffor getdata.py code to  upload ohlc value
+        """
+        candle_stick_tbl=self.tables["candle_stick_log_table"]
+        last_date=self.fetch_tables(table_name=candle_stick_tbl)['date']
+        
