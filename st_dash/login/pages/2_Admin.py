@@ -22,8 +22,7 @@ access_token_table=db_tables["access_token_table"]
 
 st.title("Admin")
 customer_tab,zerodha_tab=st.tabs(["Customer Registration","Zerodha Credentials"])
-regi_tab,log_tab,update_tab=customer_tab.tabs(['Registration','Register'])
-
+regi_tab,log_tab,upd_tab=customer_tab.tabs(['Registration','Register','Update'])
 
 with regi_tab:
     col=st.columns((1,1,1))
@@ -83,7 +82,58 @@ with log_tab:
     df=sql.fetch_tables(table_name=customer_tbl)
     st.write(df)
 
+with upd_tab:
+    col=st.columns((1,1,1))
 
+    col[1].title("Update")
+
+    today=datetime.now()
+
+    df=sql.fetch_tables(table_name=customer_tbl)
+
+    with st.form("Customer Update"):
+
+
+        st.header("Customer Personal Details")
+        
+        name=st.text_input("Enter Name",placeholder="Name")
+
+        password=st.text_input("Enter Password",placeholder="Password",type='password')
+
+        angel_username=st.text_input("Enter Angel Broking Username",placeholder="Username")
+
+        angel_password=st.text_input("Enter Angel Broking Password",placeholder="Password",type='password')
+
+        aadhar=st.number_input("Enter Adhar Number")
+
+        pan=st.number_input("Enter Pan Number")
+
+        mobile=st.number_input("Enter Mobile No.")
+
+        st.header("Customer Trading Details")
+
+        totp_key=st.text_input("Enter The TOTP Key",placeholder="TOTP Key")
+
+        fin_q=st.number_input("Enter the fin quantity")
+
+        lotsize=st.number_input("Enter Lot Size")
+
+        initial_depo=st.number_input("Enter Initial Deposit")
+
+        if st.form_submit_button("Register",use_container_width=True):
+            dic={"name":name,"pwd":password,"pan":pan,"aadhar":aadhar,"mobileno":mobile,"initialdeposit":initial_depo,"lotsize":lotsize,
+                "createdate":today,"angel_user":angel_username,"angel_pwd":angel_password,"totpkey":totp_key,"fin_q":fin_q}
+            
+            df=pd.DataFrame(dic,index=[0])
+
+            try:
+                sql.upload_to_table(df=df,table_name=customer_tbl,if_exists="append")
+                st.success("Registration Successfull")
+                time.sleep(1)
+                st.experimental_rerun()
+            except Exception as e:
+                st.error("Registration Failed")
+                st.error(e)
 
 with zerodha_tab:
     # Module to generate zerodha access token to continuews data generation of tickers values
