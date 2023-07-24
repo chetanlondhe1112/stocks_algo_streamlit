@@ -127,9 +127,9 @@ class sqlalchemy_connect:
             print(e)
             return 0
         
-    def fetch_customer(self):
+    def fetch_customer(self,customer_name=str):
         customer_tbl=self.tables[]
-        query="SELECT * FROM  WHERE `"+
+        query="SELECT * FROM `"+customer_tbl+"` WHERE name='"+customer_name+"'"
 
 
 

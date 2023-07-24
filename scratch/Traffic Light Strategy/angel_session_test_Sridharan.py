@@ -263,7 +263,7 @@ def angel_place_order(transaction_type, tsymbol, ttoken,obj_dict): # Change Prod
 
  
 	# pdb.set_trace()
-	"""for name in obj_list:
+	for name in obj_list:
 		try:					
 			# Need to add looping over customers object									
 			orderId=name.placeOrder(orderparams) # populate the customer dictionary with order id
@@ -282,7 +282,7 @@ def angel_place_order(transaction_type, tsymbol, ttoken,obj_dict): # Change Prod
 			time_now = datetime.datetime.now().time().replace(microsecond=0)
 			order_fail={"time":time_now, "name":obj_dict[name], "symbol":tsymbol}
 			print(time_now)
-			print("\n")"""
+			print("\n")
 
 
 

@@ -1,122 +1,44 @@
 import pandas as pd
 import pdb
-import datetime
 import os
 import sys
 import time
-
 from datetime import datetime,date
-# Read in the data
 from sqlalchemy import create_engine,text
 import time
-import tomlkit
-#import streamlit as st
+from functions.db_conn import sqlalchemy_connect
+import requests
 
-class sqlalchemy_connect:
+sql=sqlalchemy_connect(username="chetan")
 
-    def __init__(self,username,config_file_path=str):
-        self.user=username
-        self.file_path=config_file_path
-        self.config=self.read_config()
-        self.cred=self.config['db_server']
-        self.tables=self.config['db_tables']
-        self.engine=self.engine()
-
-    def now_time(self):
-      curr_time = datetime.now()
-      return str(curr_time).split(".")[0]
-
-    def read_config(self):
-
-        #print(str(self.now_time())+" = Reading Configuration File....")
-        try:
-          with open(self.file_path, mode="rt", encoding="utf-8") as fp:
-              config=dict(tomlkit.load(fp))
-              #print(str(self.now_time())+" = File Read: Success :)")
-              #self.config_info(config)
-              return config
-        except Exception as e:
-          print(str(self.now_time())+" = File Read: Failed :(")
-          time.sleep(2)
-          print(e)
-
-    def config_info(self,config=dict):
-        #print(str(self.now_time())+" = Collecting File Information...")
-        time.sleep(1)
-        print("="*50)
-        time.sleep(1)
-        print("Name: "+str(config['file_info']['file_name']))
-        print("Info: "+str(config['file_info']['info']))
-        print("Version: "+str(config['file_info']['version']))
-        time.sleep(1)
-        print("*"*22+"Auther"+"*"*22)
-        print("Auther Name: "+str(config['auther']['name']))
-        print("Auther Mail: "+str(config['auther']['mail']))
-        print("="*50)
-        time.sleep(2)
-
-
-    def sqlalchemy_connection(self,credential_dict=dict):
-        """
-        function to establish the sqlalchemy connection to the database
-        -Argument passed to function should be the dictionary of database configuration
-        """
-        user=credential_dict["user"]
-        password=credential_dict["password"]
-        host=credential_dict["host"]
-        port=credential_dict["port"]
-        database=credential_dict["database"]
-        status_str=" = Connection Object Build :"
-        #print(str(self.now_time())+" = Generating Connection Object...")
-        time.sleep(2)
-        try:
-          engine=create_engine("mysql://{}:{}@{}:{}/{}".format(user,password,host,port,database))
-          #print(str(self.now_time())+status_str+"Success")
-          print(str(self.now_time())+" = Connection Object :"+str(engine))
-          time.sleep(2)
-          return engine
-        except Exception as e:
-          print(str(self.now_time())+status_str+"Failed")
-          print(str(self.now_time())+" = Error : "+str(e))
-          return ''
-
-    def engine(self):
-        """
-          Function to create the connection with database
-        """
-        return self.sqlalchemy_connection(self.cred)
-
-    def fetch_tables(self,table_name=str):
-        df=pd.read_sql_table(table_name,self.engine)
-        return df
-
-    def fetch_user_table(self,table_name=str):
-        s="SELECT * FROM `"+table_name+"` WHERE username='"+str(self.user)+"'"
-        df=pd.read_sql_query(s,self.engine)
-        return df
-    
-    def upload_to_table(self,df=pd.DataFrame(),table_name=str):
-        try:
-            df.to_sql(table_name,con=self.engine,if_exists="replace",index=0)
-            return True
-        except Exception as e:
-            print(e)
-
-sql=sqlalchemy_connect(username="chetan",config_file_path="tls_config.toml")
-#print(sql)
 tables_dict=sql.read_config()
 db_tables=tables_dict["db_tables"]
 customer_tbl=db_tables["customer_table"]
 candle_stick_tbl=db_tables["candle_stick_log_table"]
 entry_conditions=db_tables["entry_conditions"]
 
+# Token Genearation
+def token_generation():
+	print("Generating Token...")
+	url = 'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json'
+	d = requests.get(url).json()
+	token_df = pd.DataFrame.from_dict(d)
+	token_df['expiry'] = pd.to_datetime(token_df['expiry']).apply(lambda x: x.date())
+	token_df = token_df.astype({'strike': float})
+	# token_df
+	token_df1= token_df[(token_df['name'] == 'BANKNIFTY') & (token_df['instrumenttype'] == 'OPTIDX') & (token_df['expiry']==expiry) ]
+	print("\n Token Generation df\n",token_df)
+	token_df.to_csv("tokn.csv")
+	print("\n Token Generation df1\n",token_df1)
+	return token_df
 
-candle_data=sql.fetch_tables(candle_stick_tbl)
-candle_data.index=candle_data["date"]
-print(candle_data)
-
+# Fetch the candle stick data
 while True:
-        #data = pd.read_csv('NIFTY BANK.csv', index_col=0)
+    
+    #data = pd.read_csv('NIFTY BANK.csv', index_col=0)
+    candle_data=sql.fetch_tables(candle_stick_tbl)
+    candle_data.index=candle_data["date"]
+    print(candle_data)
     if len(candle_data):
         data = candle_data.iloc[:-1 , :]
             
@@ -133,7 +55,6 @@ while True:
     data=pd.read_csv("datav1.csv",index_col=0)
     data = data.loc[~data.index.str.contains('09:15:00')]
     print(data.to_csv("datav2.csv"))
-
 
 
     # Create a new column that indicates whether each candlestick is red or green
@@ -315,8 +236,9 @@ while True:
     #df_pairs = pd.read_csv('new3.csv', index_col=0)
     df_pairs_up=df_pairs.tail(2)
     df_pairs_up.insert(0,"tradingstreategy",1)
-    status=sql.upload_to_table(df=df_pairs_up,table_name=entry_conditions)
+    status=sql.upload_to_table(df=df_pairs_up,table_name=entry_conditions,if_exists="append")
     print(status)
+    print("\n Entry cnditions\n",df_pairs_up)
 
     # = pd.read_csv('Entry_conditions.csv', index_col=0)
 
@@ -329,7 +251,7 @@ while True:
     if data1.iloc[-1]['Start Date'].date()==today:
         print("I am going to run the execution code")
         time.sleep(5)
-        #import angel_session_test_Sridharan.py
+        import angel_session_test_Sridharan_new.py
     #pdb.set_trace()
     else:
     

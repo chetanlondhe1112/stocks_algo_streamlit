@@ -267,7 +267,7 @@ def order_status():
 #pdb.set_trace()
 def angel_place_order(transaction_type, tsymbol, ttoken): # Change Product type to MIS ----> INTRADAY (from ---> CARRYFORWARD )
 	global orderparams
-	
+	# fin-q,obj two object pass to func
 	orderparams = {"variety": "NORMAL", "tradingsymbol": tsymbol, "symboltoken": ttoken, "transactiontype": transaction_type, 
 	"exchange": exch_seg, "ordertype": "MARKET", "producttype": "INTRADAY", "duration": "DAY", "price": "0", "squareoff": "0", 
 	"stoploss": "0", "quantity": fin_q }

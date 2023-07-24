@@ -321,7 +321,6 @@ def get_token_and_exchange(name): # get_token_and_exchange('BANKNIFTY27OCT22FUT'
 
 
 for name in obj_list:
-	
 	try:
 		Trade_net = name.position()['data'] # Angel Trade Net Positions
 		nobj = obj_dict[name]
@@ -349,7 +348,7 @@ def angel_place_order(transaction_type, tsymbol, ttoken): # Change Product type 
 	# pdb.set_trace()
 	for name in obj_list:
 		try:					
-												
+											
 			orderId=name.placeOrder(orderparams)
 			print(obj_dict[name])
 			print(tsymbol, " The order id is: {}".format(orderId))
@@ -368,7 +367,7 @@ def angel_place_order(transaction_type, tsymbol, ttoken): # Change Product type 
 			print(time_now)
 			print("\n")
 
-
+"""
 
 # pdb.set_trace()
 exch_seg = "NFO"
@@ -395,40 +394,42 @@ while True:
 	print("You have chosen ---> ", val)
 	print("\n")
 	# pdb.set_trace()
+	for obj in obj_list:
+		print(ge)		
+		if val == "1":	
 
-	if val == "1":	
-		# transaction_type = "BUY"
-		print('Buying CALL ----> ')
-		# pdb.set_trace()
-		#angel_place_order("BUY", CE_Symbol, CE_Token)
-		break
-	elif val == "2":	
-		# transaction_type = "BUY"
-		print('Buying PUT ----> ')
-		#angel_place_order("BUY", PE_Symbol, PE_Token)
-		break
-	elif val == "3":	
-		# transaction_type = "SELL"
-		print('Selling CALL ----> ')
-		#angel_place_order("SELL", CE_Symbol, CE_Token)
-		break
-	elif val == "4":	
-		# transaction_type = "SELL"
-		print('Selling PUT ----> ')
-		#angel_place_order("SELL", PE_Symbol, PE_Token)
-		break
-	elif val == "1" or val == "2" or val == "3" or val == "4":
-		print("\n")
-		print("exiting Loop")
-		break
-		#break	
-	else:
-		print("\n")
-		print("Wrong Entry  ---> Please retry ")
-		# break
-		# pdb.set_trace()
+			# transaction_type = "BUY"
+			print('Buying CALL ----> ')
+			# pdb.set_trace()
+			#angel_place_order("BUY", CE_Symbol, CE_Token)
+			break
+		elif val == "2":	
+			# transaction_type = "BUY"
+			print('Buying PUT ----> ')
+			#angel_place_order("BUY", PE_Symbol, PE_Token)
+			break
+		elif val == "3":	
+			# transaction_type = "SELL"
+			print('Selling CALL ----> ')
+			#angel_place_order("SELL", CE_Symbol, CE_Token)
+			break
+		elif val == "4":	
+			# transaction_type = "SELL"
+			print('Selling PUT ----> ')
+			#angel_place_order("SELL", PE_Symbol, PE_Token)
+			break
+		elif val == "1" or val == "2" or val == "3" or val == "4":
+			print("\n")
+			print("exiting Loop")
+			break
+			#break	
+		else:
+			print("\n")
+			print("Wrong Entry  ---> Please retry ")
+			# break
+			# pdb.set_trace()
 
-
+"""
 while True:
 	bnf_ltp = obj.ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
 	#bnf_ltp=44263

@@ -30,7 +30,7 @@ def fetch_access_tokens(connection=sq_conn,table_name=access_token_table):
     """
         To fetch all access tokens
     """
-    query_names_q='SELECT id,access_token,createdate FROM `'+ table_name+'`'
+    query_names_q='SELECT id,api_key,api_secret,access_token,createdate FROM `'+ table_name+'`'
     query_names_df=pd.read_sql_query(query_names_q,connection,index_col=['id']).drop_duplicates().dropna(axis=1,how='all')
     if len(query_names_df):
         query_names_df=query_names_df.sort_values(by='createdate',ascending=False,ignore_index=True)
@@ -42,8 +42,7 @@ def fetch_access_tokens(connection=sq_conn,table_name=access_token_table):
 #api_s = "ni5pwigvj0k0vxxzzf9nc7qo1qlk4u1g"
 #access_token="00obwJHA0kEMq4Xj9Qqyr000Hc4zJrjK"
 
-api_k = "m8lqe0lp92mndpzw"
-api_s = "lhg6sx4g3etshuleybete974h3voo8gz"
+
  
 
 #access_token="PvshDH9vGWjg4VjUYBpY0LV1bbjJyrHY"
@@ -60,9 +59,10 @@ print("Last token updated date: "+str(last_date))
 print("Last Token: "+str(access_tk_df.iloc[0]["access_token"]))
 
 if today==last_date:
-        
-	access_token=str(access_tk_df.iloc[0]["access_token"])
-	print(access_token)
+  access_token=str(access_tk_df.iloc[0]["access_token"])
+  api_k=str(access_tk_df.iloc[0]["api_key"])
+  api_s=str(access_tk_df.iloc[0]["api_secret"])
+  print(access_token)
 else:
     #access_token=str(access_tk_df.iloc[0]["access_token"])
     print("token is not available for today")

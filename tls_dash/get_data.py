@@ -2,7 +2,7 @@
 import zrd_login_sridharan as zl
 from kiteconnect import KiteConnect
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date
 import datetime as dt
 import pandas as pd
 import time
@@ -12,32 +12,18 @@ import pytz
 from sqlalchemy import create_engine,text
 from datetime import datetime,date
 import pandas as pd
-from get_data_func import fetchOHLCExtended,live_zone_time
+from functions.get_data_func import fetchOHLCExtended,live_zone_time
+from functions.db_conn import sqlalchemy_connect
 
+sql=sqlalchemy_connect(username="chetan")
 
-user="root"
-password=''
-host="localhost"
-port=3306
-database="stocks_algo"
+tables_dict=sql.read_config()
+db_tables=tables_dict["db_tables"]
+customer_tbl=db_tables["customer_table"]
+candle_stick_tbl=db_tables["candle_stick_log_table"]
+entry_conditions=db_tables["entry_conditions"]
 
-
-# Database tables details
-user_table="user"
-access_token_table="zerodha_creds"
-candle_stick_log="candle_stick_log"
-
-def sqlalchemy_connect():
-    sq_conn = create_engine("mysql://{}:{}@{}:{}/{}".format(user,password,host,port,database))
-    return sq_conn
-
-sq_conn=sqlalchemy_connect()
-sq_cur=sq_conn.connect()
-
-def upload_candles_dt(data=pd.DataFrame(),table_name=candle_stick_log,connection=sq_conn):
-    data.to_sql(table_name,con=connection,if_exists="replace",index=False)
-    print("uploaded")
-
+today=date.today()
 # cwd = os.chdir("C:\\PythonL")
 ohlc_intraday = {}
 
@@ -53,21 +39,20 @@ for i in tickers:
 
     start = time.time()
     
-    #try:
-    # To collect OHLC values till time
-    time.sleep(2)
-    # ohlc_intraday[i] = fetchOHLCExtended( i,"01-01-2021", "day")
-    # ohlc_intraday[i] = fetchOHLCExtended( i,"15-06-2023", "minute")
-    ohlc_intraday[i] = fetchOHLCExtended( kite,i,"1-06-2023", "30minute")
-    ohlc_intraday[i].to_csv(i + '.csv')
-    df_ohlc_intraday=ohlc_intraday[i]
-    print("first")
-    print(df_ohlc_intraday)
-    upload_candles_dt(data=df_ohlc_intraday)
-    
-    #except Exception as e:
-        
-    #    print(e)
+    try:
+            # To collect OHLC values till time
+            # ohlc_intraday[i] = fetchOHLCExtended( i,"01-01-2021", "day")
+            # ohlc_intraday[i] = fetchOHLCExtended( i,"15-06-2023", "minute")
+            ohlc_intraday[i] = fetchOHLCExtended( kite,i,today, "30minute")
+            #ohlc_intraday[i].to_csv(i + '.csv')
+            df_ohlc_intraday=ohlc_intraday[i]
+            print("first")
+            print(df_ohlc_intraday)
+            print(ohlc_intraday[i])
+            ohlc_intraday[i].to_csv(i + '.csv')
+            sql.upload_to_table(df=df_ohlc_intraday, table_name=candle_stick_tbl, if_exists='replace')
+    except Exception as e:    
+        print(e)
     
     end = time.time()
     print(end - start) #     <-----NOTE Hashed
@@ -129,11 +114,10 @@ while True:
                     # break                
             else:
                 try:
-                    ohlc_intraday[i] = fetchOHLCExtended(kite,i,"01-07-2023", "30minute")
+                    ohlc_intraday[i] = fetchOHLCExtended( kite,i,today, "30minute")
                     print(ohlc_intraday[i])
                     ohlc_intraday[i].to_csv(i + '.csv')
-                    upload_candles_dt(data=df_ohlc_intraday)
-
+                    sql.upload_to_table(df=df_ohlc_intraday, table_name=candle_stick_tbl, if_exists='replace')
                     print(time_now)
                     print("downloaded the get_data file for ticker again--->" , i)
                     print("\n")

@@ -3,13 +3,12 @@ from kiteconnect import KiteTicker
 import datetime
 import time
 import pdb
-import pandas as pd
+import pandas as pds
 
 # Print Current time with stip
 t = time.localtime()
 current_time = time.strftime("%H:%M:%S", t)
 print(current_time)
-
 
 # Deafualts
 kws = ""
@@ -18,7 +17,6 @@ kite = ""
 api_k = "m8lqe0lp92mndpzw"
 api_s = "lhg6sx4g3etshuleybete974h3voo8gz"
  
-
 # log in to zerodha API panel
 def get_login(api_k, api_s):  
     """
