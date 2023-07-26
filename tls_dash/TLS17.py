@@ -23,19 +23,27 @@ today=date.today()
 print(today)
 # Token Genearation
 def token_generation():
-	print("Generating Token...")
-	url = 'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json'
-	d = requests.get(url).json()
-	token_df = pd.DataFrame.from_dict(d)
-	token_df['expiry'] = pd.to_datetime(token_df['expiry']).apply(lambda x: x.date())
-	token_df = token_df.astype({'strike': float})
-	# token_df
-	token_df1= token_df[(token_df['name'] == 'BANKNIFTY') & (token_df['instrumenttype'] == 'OPTIDX') & (token_df['expiry']==expiry) ]
-	print("\n Token Generation df\n",token_df)
-	token_df.to_csv("tokn.csv")
-	print("\n Token Generation df1\n",token_df1)
-	return token_df
+    try:
+        print("Generating OpenAPIScripMaster Token...")
+        url = 'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json'
+        d = requests.get(url).json()
+        token_df = pd.DataFrame.from_dict(d)
+        print(token_df)
+        token_df['expiry'] = pd.to_datetime(token_df['expiry']).apply(lambda x: x.date())
+        token_df = token_df.astype({'strike': float})
+        # token_df
+        #token_df1= token_df[(token_df['name'] == 'BANKNIFTY') & (token_df['instrumenttype'] == 'OPTIDX') & (token_df['expiry']==expiry) ]
+        print("\n Token Generation df(only 5 rows to show)\n",token_df.head(5))
+        print("Preparing csv..")
+        token_df.to_csv("csvs/OpenAPIScripMaster1.csv")
+        #print("\n Token Generation df1\n",token_df1)
+    except Exception as e:
+        print(e)
 
+df= pd.read_csv("D:/Arkonet Project/Project-06/Code/stocks_algo_streamlit/stocks_algo_streamlit/tls_dash/csvs/OpenAPIScripMaster1.csv",low_memory=False,index_col=0)['expiry']
+print(df)
+'''
+token_generation()
 # Fetch the candle stick data
 while True:
     
@@ -240,12 +248,12 @@ while True:
     #df_pairs = pd.read_csv('new3.csv', index_col=0)
     df_pairs_up=df_pairs.tail(2)
     df_pairs_up.insert(0,"tradingstreategy",1)
-    status=sql.upload_to_table(df=df_pairs_up,table_name=entry_conditions,if_exists="append")
+    
+    status=sql.upload_entry_conditions(df=df_pairs_up)
+    #status=sql.upload_to_table(df=df_pairs_up,table_name=entry_conditions,if_exists="append")
     print(status)
     print("\n Entry cnditions\n",df_pairs_up)
-
     # = pd.read_csv('Entry_conditions.csv', index_col=0)
-
 
     #data1 = pd.read_csv('Entry_conditions.csv', index_col=0)
     data1=df_pairs_up
@@ -265,4 +273,4 @@ while True:
         #if gap is not 5mins, again get_data
 
         #pdb.set_trace()
-        time.sleep(5)
+        time.sleep(5)'''

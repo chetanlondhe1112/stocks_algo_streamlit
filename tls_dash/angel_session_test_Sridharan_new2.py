@@ -63,10 +63,13 @@ def getTokenInfo (symbol, exch_seg ='NSE',instrumenttype='OPTIDX',strike_price =
 	strike_price = strike_price*100
 	if exch_seg == 'NSE':
 		eq_df = df[(df['exch_seg'] == 'NSE') ]
+		print("\ntoken fetching\n",eq_df[eq_df['name'] == symbol])
 		return eq_df[eq_df['name'] == symbol]
 	elif exch_seg == 'NFO' and ((instrumenttype == 'FUTSTK') or (instrumenttype == 'FUTIDX')):
+		print("\ntoken fetching\n",df[(df['exch_seg'] == 'NFO') & (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol)].sort_values(by=['expiry']))
 		return df[(df['exch_seg'] == 'NFO') & (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol)].sort_values(by=['expiry'])
 	elif exch_seg == 'NFO' and (instrumenttype == 'OPTSTK' or instrumenttype == 'OPTIDX'):
+		print("\ntoken fetching\n",df[(df['exch_seg'] == 'NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry']))
 		return df[(df['exch_seg'] == 'NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry'])
 
 
@@ -129,7 +132,6 @@ def angelbrok_login():
 	except Exception as e:
 		print("Error in login", e)
 
-
 angelbrok_login()
 #
 
@@ -138,7 +140,7 @@ obj_list =[obj]
 obj_dict ={obj:"Sridharan"}
 # obj_dict ={obj:"Nidhi"}
 
-
+"""
 
 print("check obj")
 time_15_15 = datetime.time(15,10)
@@ -179,7 +181,7 @@ while True:
 
 	else:
 		break
-
+"""
 def roundup(x):
 	return x if x % 100 == 0 else x + 100 - x % 100
 
@@ -201,7 +203,7 @@ def get_symbol():
 	print(strike_put)
 
 	#expiry_day = datetime.date(2023,5,25) #<------------------------Change every Week ----------------------->
-	expiry_day = datetime.date(2023,7,13) #praveen- change expiry every week before friday start# need to work with dashbboard  
+	expiry_day = datetime.date(2023,7,27) #praveen- change expiry every week before friday start# need to work with dashbboard  
 	ATMStrike1 = strike_call
 	ATMStrike2 = strike_put
 	# expiry_day = expiry
@@ -233,7 +235,7 @@ def get_symbol():
 	return strike_put,strike_call, CE_Symbol, CE_Token, PE_Symbol, PE_Token
 
 get_symbol()
-
+"""
 # pdb.set_trace()
 
 
@@ -426,7 +428,7 @@ while True:
 			angel_place_order("SELL", PE_Symbol, PE_Token)
 			break
 sys.exit()
-
+"""
 
 
 

@@ -10,6 +10,7 @@ import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import re
+from sqlalchemy import text
 
 _="""
     Function Definations
@@ -21,6 +22,7 @@ class authenticate:
 
     def __init__(self,connection_object=object):
         self.sql=connection_object
+        self.engine=self.sql.engine
         self.mail_info=self.sql.st_algo_mail
         self.sender_mail=self.mail_info['mail']
         self.sender_mail_password=self.mail_info['password']
@@ -217,12 +219,27 @@ class authenticate:
             pass_v,pass_e=password_validate(password)
             return pass_v,pass_e
 
-    def auth_func(seelf,emails,uernames,passwords):
+    def auth_func(self,emails,uernames,passwords):
         authenticator = stauth.Authenticate(emails,uernames,passwords,"stocksalgo", "ghijk", cookie_expiry_days=30)
         names, authentication_status, username = authenticator.login("Login", "main")
         return names,authentication_status,username,authenticator
+
+    def fetch_query(self,query=str):
+        try:
+            return pd.read_sql_query(sql=query,con=self.engine)
+        except Exception as e:
+            print(e)
+            return 0
 
     def check_user(self,username=str,email=str):
         user_table=self.sql.tables['user_table']
         acc_query = "SELECT * FROM '"+user_table+"' where username='" + username + "'and email='"+email+"'"
         return self.fetch_query(acc_query)
+    
+    def sign_up_user(self,data=dict):
+        """INSERT INTO BOOKS (book_id, book_price,
+        genre, book_name) VALUES(:book_id, :book_price,
+        :genre, :book_name)"""
+        user_table=self.tables["user_table"]
+        add_query = "INSERT INTO `"+user_table+"` (fullname, username, password, createdate, email)VALUES(:fullname,:username,:password,:createdate,:email)"
+        self.engine.execute(text(add_query),**data)

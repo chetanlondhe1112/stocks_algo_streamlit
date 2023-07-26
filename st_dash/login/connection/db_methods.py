@@ -106,12 +106,8 @@ class sqlmethods:
         current_time=datetime.now()
         table_name=self.tables["access_token_table"]
         df=pd.DataFrame(data={'id':1,'api_key':api_key,'api_secret':api_secret,'access_token':access_token,'createdate':current_time},index=[0])
-        try:
-            df.to_sql(table_name,con=self.e,if_exists="replace",index=False)
-            return True,''
-        except Exception as e:
-            return False,e    
-    
+        df.to_sql(table_name,self.engine,if_exists="replace",index=False)
+           
     
 
     def get_order_log_names(self):

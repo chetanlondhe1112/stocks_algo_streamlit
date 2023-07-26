@@ -23,7 +23,8 @@ customer_tbl=db_tables["customer_table"]
 candle_stick_tbl=db_tables["candle_stick_log_table"]
 entry_conditions=db_tables["entry_conditions"]
 
-today=date.today()
+today=datetime.today().strftime('%d-%m-%Y')
+
 # cwd = os.chdir("C:\\PythonL")
 ohlc_intraday = {}
 
@@ -40,17 +41,19 @@ for i in tickers:
 
     start = time.time()
     
-    try:
-        ohlc_intraday[i] = fetchOHLCExtended( kite,i,today, "30minute")
-        #ohlc_intraday[i].to_csv(i + '.csv')
-        df_ohlc_intraday=ohlc_intraday[i]
-        print("first")
-        print(df_ohlc_intraday)
-        print(ohlc_intraday[i])
-        ohlc_intraday[i].to_csv(i + '.csv')
-        sql.upload_ohlc(df=df_ohlc_intraday)
-    except Exception as e:    
-        print(e)
+    #try:
+    ohlc_intraday[i] = fetchOHLCExtended( kite,i,today, "30minute")
+    #ohlc_intraday[i].to_csv(i + '.csv')
+    df_ohlc_intraday=ohlc_intraday[i]
+    print("first")
+    print(df_ohlc_intraday)
+    print(ohlc_intraday[i])
+
+
+    ohlc_intraday[i].to_csv(i + '.csv')
+    sql.upload_ohlc(df=df_ohlc_intraday)
+    #except Exception as e:    
+    #    print(e)
     
     end = time.time()
     print(end - start) #     <-----NOTE Hashed
@@ -72,7 +75,7 @@ print("done")
 
 # To collect continues updating data
 while True:  
-    time.sleep(10)
+    time.sleep(5)
     # For every ticker
     for i in tickers:
 

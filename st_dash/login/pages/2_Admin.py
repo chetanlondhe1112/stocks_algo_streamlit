@@ -11,20 +11,20 @@ import datetime as dt
 import time
 import pdb
 import pandas as pd
-from sqlalchemy import create_engine,text
-from connection.db_conn import sqlalchemy_connect
- 
-username="chetan"
-sql=sqlalchemy_connect()
+from Home import sql,sqlmethods
 
-tables_dict=sql.read_config()
+tables=sql.tables
+customer_tbl=tables["customer_table"]
+entry_conditions=tables["entry_conditions"]
+order_log_table=tables["order_log_table"]
+user_table=tables["user_table"]
+access_token_table=tables["access_token_table"]
 
-db_tables=tables_dict["db_tables"]
-customer_tbl=db_tables["customer_table"]
-entry_conditions=db_tables["entry_conditions"]
-order_log_table=db_tables["order_log_table"]
-user_table=db_tables["user_table"]
-access_token_table=db_tables["access_token_table"]
+if not st.session_state["authentication_status"]:
+    st.error("Please Login")
+    st.stop()
+
+dbm=sqlmethods(sql,st.session_state["authentication_status"])
 
 st.title("Admin")
 customer_tab,zerodha_tab,defaults,bnf_log=st.tabs(["Customer Registration","Zerodha Credentials","Set Values","bnf_log"])
@@ -72,7 +72,7 @@ with regi_tab:
             df=pd.DataFrame(dic,index=[0])
 
             try:
-                sql.upload_to_table(df=df,table_name=customer_tbl,if_exists="append")
+                dbm.upload_to_table(df=df,table_name=customer_tbl,if_exists="append")
                 st.success("Registration Successfull")
                 time.sleep(1)
                 st.experimental_rerun()
@@ -85,7 +85,7 @@ with log_tab:
 
     col2[1].title("Register")
     #df=pd.read_sql_table(customer_tbl,con=sq_conn,index_col=['id'])
-    df=sql.fetch_tables(table_name=customer_tbl,)
+    df=dbm.fetch_tables(table_name=customer_tbl,)
     st.write(df)
 
 with upd_tab:
@@ -96,11 +96,11 @@ with upd_tab:
 
     today=datetime.now()
 
-    customers_names=sql.fetch_customers_names()
+    customers_names=dbm.fetch_customers_names()
 
     customer_name=st.selectbox("Select The Customer",options=customers_names)
 
-    df=sql.fetch_customer(customer_name=customer_name)
+    df=dbm.fetch_customer(customer_name=customer_name)
 
     with st.form("Customer Update"):
 
@@ -136,7 +136,7 @@ with upd_tab:
                 "createdate":today,"angel_user":angel_username,"angel_pwd":angel_password,"totpkey":totp_key,"fin_q":fin_q}
             with st.spinner("Updating..."):
                 try:
-                    sql.update_customer(update_values=dic,customr_name=customer_name)
+                    dbm.update_customer(update_values=dic,customr_name=customer_name)
                     st.success("Update Successfull")
                     st.experimental_rerun()
                 except Exception as e:
@@ -194,8 +194,8 @@ with zerodha_tab:
     tit_col[1].title("Access Token Manager")
     col=st.columns((0.5,1,0.5))
     #image = Image.open('scratch\study\project_features\login\kite logo.png')
-
-    access_tk_df=sql.fetch_access_tokens(table_name=access_token_table)
+    if 'tkn_df' not in st.session_state:
+        st.session_state['tkn_df']=dbm.fetch_access_tokens(table_name=access_token_table)
     with col[1]:
         
         im_col=st.columns((3,1,5))
@@ -247,6 +247,7 @@ with zerodha_tab:
                             st.error("Sorry,error to generate the access token!!")
                 
         with dbacctok_tab:
+            
             with st.form("Update Token"):
                 st.header("Update Token")
                 st.write("Today : "+str(dt.date.today()))
@@ -258,7 +259,7 @@ with zerodha_tab:
                     
                     st.success(st.session_state['acctkn'])
                     if st.form_submit_button("Update",use_container_width=True):
-                        state,error=sql.update_access_token(access_token=st.session_state['acctkn'],api_key=api_k,api_secret=api_s)
+                        state,error=dbm.update_access_token(access_token=st.session_state['acctkn'],api_key=api_k,api_secret=api_s)
 
                         if state==True:
                             st.success("Token Updated")
@@ -272,19 +273,20 @@ with zerodha_tab:
                     
                     add_token=st.text_input("Give Your Token",placeholder="Access Token")
                     if st.form_submit_button("Replace",use_container_width=True):
-                        state,error=sql.update_access_token(access_token=add_token,api_key=api_k,api_secret=api_s)
-
-                        if state==True:
-                            st.success("Token Updated")
-                            time.sleep(2)
-                            st.experimental_rerun()
-                        else:
-                            st.error("Sorry,error to update token")
-                            st.error(error)
-
+                        current_time=datetime.now()
+                        table_name=dbm.tables["access_token_table"]
+                        df=pd.DataFrame(data={'id':1,'api_key':api_k,'api_secret':api_s,'access_token':add_token,'createdate':current_time},index=[0])
+                        df.to_sql(table_name,dbm.engine,if_exists="replace",index=False)
+                        
+                        _='''
+                        dbm.update_access_token(access_token=add_token,api_key=api_k,api_secret=api_s)
+                        '''
+                        st.success("Updated")
+                        st.session_state['tkn_df']=dbm.fetch_access_tokens(table_name=access_token_table)
+                        st.experimental_rerun()
 
                 st.subheader("Token Log")
-                st.dataframe(access_tk_df,use_container_width=True)
+                st.dataframe(st.session_state['tkn_df'],use_container_width=True)
 
 with defaults:
     st.title("Set Values")

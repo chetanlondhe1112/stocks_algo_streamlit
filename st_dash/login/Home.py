@@ -50,8 +50,8 @@ st.set_page_config(
     )
 
 # CSS file
-#with open('CSS/homestyle.css') as f:
-#    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+with open('css/homestyle.css') as f:
+    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 #Page columns layout
 #if "Home_Image" not in st.session_state:
@@ -166,7 +166,6 @@ def main():
     with col1[1]:
 
         if st.session_state["authentication_status"]:
-            dbm=sqlmethods(sql,username=st.session_state["username"])
 
             authen=st.session_state['authenticator']
 
@@ -261,30 +260,29 @@ def main():
                                 st.error(pass_e)
 
                         else:    
-                            try:
-                                with st.spinner("Creating account..."):
-                                    time.sleep(2)
-                                    signing_up_datetime = datetime.now()
-                                    add_query = 'insert into `user`(`fullname`,`username`,`password`,`createdate`,`email`)VALUES({},{},{},{},{})'.format(str(full_name),username,str(hashed_password[0]),signing_up_datetime,str(email))
-                                    try:
-                                        sql.engine.execute(text(add_query))
-                                        st.success("Successfully created account.")
-                                    except:
-                                        st.error("Error to create account.")
+                            
+                            with st.spinner("Creating account..."):
+                                time.sleep(2)
+                                signing_up_datetime = datetime.now()
+                                data={"fullname":str(full_name),"username":username,"password":str(hashed_password[0]),"createdate":signing_up_datetime,"email":str(email)}
+                                #try:
+                                at.sign_up_user(data=data)
+                                st.success("Successfully created account.")
+                                time.sleep(1)
+                                #except:
+                                #    st.error("Error to create account.")
+                                #    time.sleep(1)
 
-                                with st.spinner("Sending username and password to mail-id"):
-                                    try:
-                                        time.sleep(2)
-                                        at.password_mail(email, username, password)
-                                        st.session_state["create_acc"]=False
-                                        st.experimental_rerun()
-                                    except:
-                                        st.error("Error to send mail.")
+                            with st.spinner("Sending username and password to mail-id"):
+                                try:
+                                    time.sleep(1)
+                                    at.password_mail(email, username, password)
+                                    st.session_state["create_acc"]=False
+                                except:
+                                    st.error("Error to send mail.")
    
                                 #st.balloons()
-                                
-                            except:
-                                st.error("Please,cheak your network.")
+                            
                             st.experimental_rerun()
 
                 login_col=st.columns((1.3,1))    
@@ -326,12 +324,12 @@ def main():
                             elif mail_v==True:    
                                 acc_query = "SELECT * FROM user where email='" + str(st.session_state["user_id"]) + "'" 
                                 #sq_cur.execute(text(acc_query) )      
-                                st.session_state["values"] = sql.fetch_query(acc_query)
+                                st.session_state["values"] = at.fetch_query(acc_query)
                                 #st.experimental_rerun()
                                 if len(st.session_state["values"]):
                                     if not st.session_state["OTP"]:
                                         st.session_state["OTP"]=at.reset_password_mail_verfication(st.session_state["user_id"])
-                                        #st.experimental_rerun()
+                                        st.experimental_rerun()
                                     else:    
                                         check_otp=st.text_input("Enter OTP")
                                         #st.session_state["otp_verify"]=st.form_submit_button("Verify",on_click=otp_verify_callback)
@@ -377,7 +375,7 @@ def main():
                                 st.error(pass_e)
                             elif pass_v==True:
                                 hashed_password = stauth.Hasher([str(new_pass)]).generate()
-                                reset_pass_q="UPDATE user_login SET password = '"+str(hashed_password[0])+"' WHERE id = '"+st.session_state["user_id"]+"'"
+                                reset_pass_q="UPDATE user SET password = '"+str(hashed_password[0])+"' WHERE id = '"+st.session_state["user_id"]+"'"
                                 sql.engine.execute(text(reset_pass_q))
                                 st.success("Password has reset")
                                 time.sleep(2)

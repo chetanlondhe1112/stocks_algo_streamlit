@@ -138,15 +138,51 @@ class sqlalchemy_connect:
             return query_names_df
         else:
             return pd.DataFrame()
+        
+    def fetch_query(self,query=str):
+        try:
+            return pd.read_sql_query(sql=query,con=self.engine)
+        except Exception as e:
+            print(e)
+            return 0
+            
     def upload_ohlc(self,df):
+
         """
             Validationn ffor getdata.py code to  upload ohlc value
         """
         candle_stick_tbl=self.tables["candle_stick_log_table"]
-        last_date=self.fetch_tables(table_name=candle_stick_tbl).iloc[-1]['date']
-        new_data=df[df['date']>last_date]
+        #last_date=self.fetch_tables(table_name=candle_stick_tbl).iloc[-1]['date'].to_datetime64()
+        today=date.today()
         try:
-            print("uploading new OHLC")
-            self.sql.upload_to_table(df=new_data, table_name=candle_stick_tbl, if_exists='append')
+            #print(type(str(last_date).split("T")[0]),type(last_date))
+            oq='SELECT date FROM `'+ candle_stick_tbl+'` WHERE DATE(date)="'+str(today)+'"'
+            old_rows=len(self.fetch_query(oq))
+            if old_rows<18:
+                print("removing Old record : {}rows".format(old_rows))
+                dq='DELETE FROM `'+ candle_stick_tbl+'` WHERE DATE(date)="'+str(today)+'"'
+                self.engine.execute(text(dq))
+                print("uploading new OHLC")
+                self.upload_to_table(df, table_name=candle_stick_tbl, if_exists='append')
+            else:
+                print("Todays Ohlc collected")
+                return 1
         except Exception as e:
             print(e)
+        
+    def upload_entry_conditions(self,df):
+        today=date.today()
+        entry_conditions=self.tables["entry_conditions"]
+
+        oq='SELECT `Start Date` FROM `'+ entry_conditions+'` WHERE DATE(`Start Date`)="'+str(today)+'"'
+        print(oq)
+        old_rows=len(self.fetch_query(oq))
+        print("removing Old Entry : {}rows".format(old_rows))
+        dq='DELETE FROM `'+ entry_conditions+'` WHERE DATE(`Start Date`)="'+str(today)+'"'
+        self.engine.execute(text(dq))
+        print("uploading new Entry")
+        self.upload_to_table(df, table_name=entry_conditions, if_exists='append')
+        
+            #status=.upload_to_table(df=df_pairs_up,table_name=entry_conditions,if_exists="append")
+
+        

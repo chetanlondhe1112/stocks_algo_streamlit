@@ -35,7 +35,7 @@ apikey = 'DodjVpCE' # Sridharan knsridharan@winrich.in
 #pwd = 'KnsAng@12#'
 #pwd = '1985'
 #kiteSetupKeyForTOTP = 'ZT4OKWGC3TXIRPRZJLDKX3IBCM'
-expiry = date(2023, 6, 29) # For Future
+expiry = date(2023, 7, 27) # For Future
 #time_15_15 = datetime.time(15,15)
 
 # pdb.set_trace()
@@ -108,19 +108,22 @@ def get_obj(customer_dict=dict):
 	return customer_dict
 
 
-def getTokenInfo (symbol, exch_seg ='NSE',instrumenttype='OPTIDX',strike_price = '',pe_ce = '',expiry_day = None):
+def getTokenInfo (symbol,exch_seg ='NSE',instrumenttype='OPTIDX',strike_price = '',pe_ce = '',expiry_day=None):
 	# pass
-	df= token_generation()
+	df= pd.read_csv("D:/Arkonet Project/Project-06/Code/stocks_algo_streamlit/stocks_algo_streamlit/tls_dash/csvs/OpenAPIScripMaster1.csv",low_memory=False)
+	print(df[df['exch_seg'] == 'NFO'])
 	strike_price = strike_price*100
 	if exch_seg == 'NSE':
 		eq_df = df[(df['exch_seg'] == 'NSE') ]
+		print("\ntoken fetching NSE\n",eq_df[eq_df['name'] == symbol])
 		return eq_df[eq_df['name'] == symbol]
 	elif exch_seg == 'NFO' and ((instrumenttype == 'FUTSTK') or (instrumenttype == 'FUTIDX')):
+		print("\ntoken fetching NFO1\n",df[(df['exch_seg'] == 'NFO') & (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol)].sort_values(by=['expiry']))
 		return df[(df['exch_seg'] == 'NFO') & (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol)].sort_values(by=['expiry'])
 	elif exch_seg == 'NFO' and (instrumenttype == 'OPTSTK' or instrumenttype == 'OPTIDX'):
-		df=df[(df['exch_seg'] == 'NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry'])
-		print("\nfetched token\n",df)
-		return df
+		print("\ntoken fetching NFO2\n",df[(df['exch_seg'] == 'NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry']))
+		return df[(df['exch_seg']=='NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry'])
+	
 
 def historic_data(object):
 	try:
@@ -196,6 +199,7 @@ def angel_place_order(obj,transaction_type, tsymbol, ttoken,fin_q): # Change Pro
 		# Need to add looping over customers object									
 		#orderId=name.placeOrder(orderparams) # populate the customer dictionary with order id
 		print(get_key(name))
+		orderId=333
 		print(tsymbol, " The order id is: {}".format(orderId))
 		time_now = datetime.datetime.now().time().replace(microsecond=0)
 		trade_dict_11 = {"time": time_now}
@@ -246,6 +250,8 @@ def get_symbol(bnf_ltp):
 
 	#expiry_day = datetime.date(2023,5,25) #<------------------------Change every Week ----------------------->
 	expiry_day = dt.date(2023,7,27) #praveen- change expiry every week before friday start# need to work with dashbboard  
+	expiry_day='2023-7-27'
+	print("expiry ",expiry_day)
 	ATMStrike1 = strike_call
 	ATMStrike2 = strike_put
 	# expiry_day = expiry
@@ -276,6 +282,7 @@ def get_symbol(bnf_ltp):
 	df_tl.to_csv("angel_trade_log_list.csv")
 	return strike_put,strike_call, CE_Symbol, CE_Token, PE_Symbol, PE_Token
 
+"""
 # customer all data
 all_cust=customer_data()
 
@@ -287,7 +294,7 @@ bnf_dic_log_df=pd.DataFrame(data={"date":dt.datetime.now(),"bnf_ltp":bnf_ltp},in
 print(bnf_dic_log_df)
 
 bnf_dic_log_df.to_csv(path_or_buf="D:/Arkonet Project/Project-06/Code/stocks_algo_streamlit/stocks_algo_streamlit/st_dash/login/csv/ltp_data.csv",mode='a',header=False,index=False)
-"""D:\Arkonet Project\Project-06\Code\stocks_algo_streamlit\stocks_algo_streamlit\st_dash\login\csv
+#D:\Arkonet Project\Project-06\Code\stocks_algo_streamlit\stocks_algo_streamlit\st_dash\login\csv
 # Entry conditions read
 #entry_con_df = pd.read_csv('Entry_conditions.csv', index_col=0)
 entry_con_df=sql.fetch_tables(entry_conditions)
@@ -541,5 +548,5 @@ while True:
 				print("EOD Reached")
 				angel_place_order(obj,"SELL", PE_Symbol, PE_Token,fin_q)
 				break
-sys.exit()
-"""
+sys.exit()"""
+
