@@ -9,20 +9,17 @@ config_file_path="config/tls_config.toml"
 
 class sqlalchemy_connect:
 
-    def __init__(self,username):
-        self.user=username
+    def __init__(self):
         self.file_path=config_file_path
         self.config=self.read_config()
         self.cred=self.config['db_server']
         self.tables=self.config['db_tables']
+        self.st_algo_mail=self.config['st_algo_mail']
         self.engine=self.engine()
        
     def now_time(self):
       curr_time = datetime.now()
       return str(curr_time).split(".")[0]
-
-    def locate_config_file(self):
-        os.path()
 
     def read_config(self):
 
@@ -47,7 +44,10 @@ class sqlalchemy_connect:
         time.sleep(1)
         print("="*50)
         time.sleep(1)
-        print("Name: "+str(config['file_info']['file_name']))
+        file_info="file_info"
+        file_name="file_name"
+        info="info"
+        print("Name: "+str(config[file_info][file_name]))
         print("Info: "+str(config['file_info']['info']))
         print("Version: "+str(config['file_info']['version']))
         time.sleep(1)
@@ -88,50 +88,5 @@ class sqlalchemy_connect:
           Function to create the connection with database
         """
         return self.sqlalchemy_connection(self.cred)
-
-    def fetch_tables(self,table_name=str):
-        """
-            Function to fetch all the data from table
-        """
-        try:
-            df=pd.read_sql_table(table_name,self.engine)
-            return df
-        except Exception as e:
-            print(e)
-
-    def fetch_table_u(self,table_name=str):
-        """
-            Retrives the tables data w.r.t user
-        """
-        s="SELECT * FROM `"+table_name+"` WHERE username='"+str(self.user)+"'"
-        try:
-            df=pd.read_sql_query(s,self.engine)
-            return df
-        except Exception as e:
-            print(e)
-
-    def upload_to_table(self,df=pd.DataFrame(),table_name=str,if_exists=str):
-        """
-            Uploads dataframe to table
-        """
-        try:
-            df.to_sql(table_name,con=self.engine,if_exists=if_exists,index=0)
-            return True
-        except Exception as e:
-            print(e)
-
-    def fetch_query(self,query=str):
-        try:
-            return pd.read_sql_query(sql=query,con=self.engine)
-        except Exception as e:
-            print(e)
-            return 0
-        
-    def fetch_customer(self,customer_name=str):
-        customer_tbl=self.tables[]
-        query="SELECT * FROM `"+customer_tbl+"` WHERE name='"+customer_name+"'"
-
-
-
 
     

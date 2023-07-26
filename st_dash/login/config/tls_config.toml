@@ -20,7 +20,6 @@ host="localhost"
 port=3306
 database="stocks_algo"
 
-
 # Database tables details
 [db_tables]
 user_table="user"
@@ -29,6 +28,10 @@ candle_stick_log_table="candle_stick_log"
 customer_table="customer"
 entry_conditions="entryconditions"
 order_log_table="order_log"
+
+[st_algo_mail]
+mail = "stockanalyser2022@gmail.com"
+password = "mualxdoewwkpekma"
 #----------------------------------------------------------------------------------------
 
 # How to access TOML file in python

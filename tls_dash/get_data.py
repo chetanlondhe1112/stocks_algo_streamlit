@@ -1,5 +1,5 @@
 # import zrd_login as zl
-import zrd_login_sridharan as zl
+from zrd_login_sridharan import zrd_login 
 from kiteconnect import KiteConnect
 import os
 from datetime import datetime, timedelta,date
@@ -31,8 +31,9 @@ ohlc_intraday = {}
 tickers=['NIFTY BANK']
 #tickers = ['NIFTY BANK', 'NIFTY 50']
 
+
 # Logger
-kite = zl.kite
+kite = zrd_login(connection_object=sql)
 
 # Collect Live OHLC Values in dataframe
 for i in tickers:
@@ -40,17 +41,14 @@ for i in tickers:
     start = time.time()
     
     try:
-            # To collect OHLC values till time
-            # ohlc_intraday[i] = fetchOHLCExtended( i,"01-01-2021", "day")
-            # ohlc_intraday[i] = fetchOHLCExtended( i,"15-06-2023", "minute")
-            ohlc_intraday[i] = fetchOHLCExtended( kite,i,today, "30minute")
-            #ohlc_intraday[i].to_csv(i + '.csv')
-            df_ohlc_intraday=ohlc_intraday[i]
-            print("first")
-            print(df_ohlc_intraday)
-            print(ohlc_intraday[i])
-            ohlc_intraday[i].to_csv(i + '.csv')
-            sql.upload_to_table(df=df_ohlc_intraday, table_name=candle_stick_tbl, if_exists='replace')
+        ohlc_intraday[i] = fetchOHLCExtended( kite,i,today, "30minute")
+        #ohlc_intraday[i].to_csv(i + '.csv')
+        df_ohlc_intraday=ohlc_intraday[i]
+        print("first")
+        print(df_ohlc_intraday)
+        print(ohlc_intraday[i])
+        ohlc_intraday[i].to_csv(i + '.csv')
+        sql.upload_ohlc(df=df_ohlc_intraday)
     except Exception as e:    
         print(e)
     
@@ -117,7 +115,7 @@ while True:
                     ohlc_intraday[i] = fetchOHLCExtended( kite,i,today, "30minute")
                     print(ohlc_intraday[i])
                     ohlc_intraday[i].to_csv(i + '.csv')
-                    sql.upload_to_table(df=df_ohlc_intraday, table_name=candle_stick_tbl, if_exists='replace')
+                    sql.upload_ohlc(df=df_ohlc_intraday)
                     print(time_now)
                     print("downloaded the get_data file for ticker again--->" , i)
                     print("\n")

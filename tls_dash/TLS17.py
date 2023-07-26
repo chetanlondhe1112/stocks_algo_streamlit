@@ -16,7 +16,11 @@ db_tables=tables_dict["db_tables"]
 customer_tbl=db_tables["customer_table"]
 candle_stick_tbl=db_tables["candle_stick_log_table"]
 entry_conditions=db_tables["entry_conditions"]
+user_table=db_tables["user_table"]
+access_token_table=db_tables["access_token_table"]
 
+today=date.today()
+print(today)
 # Token Genearation
 def token_generation():
 	print("Generating Token...")
@@ -39,7 +43,7 @@ while True:
     candle_data=sql.fetch_tables(candle_stick_tbl)
     candle_data.index=candle_data["date"]
     print(candle_data)
-    if len(candle_data):
+    if candle_data.iloc[-1]['date'].date()==today:
         data = candle_data.iloc[:-1 , :]
             
     else:

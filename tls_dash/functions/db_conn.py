@@ -21,8 +21,6 @@ class sqlalchemy_connect:
       curr_time = datetime.now()
       return str(curr_time).split(".")[0]
 
-    def locate_config_file(self):
-        os.path()
 
     def read_config(self):
 
@@ -127,3 +125,28 @@ class sqlalchemy_connect:
         candle_stick_tbl=self.tables["candle_stick_log_table"]
         last_date=self.fetch_tables(table_name=candle_stick_tbl)['date']
         
+    def fetch_access_tokens(self):
+        """
+            To fetch all access tokens
+        """
+        table_name=self.tables["access_token_table"]
+        connection=self.engine
+        query_names_q='SELECT id,api_key,api_secret,access_token,createdate FROM `'+ table_name+'`'
+        query_names_df=pd.read_sql_query(query_names_q,connection,index_col=['id']).drop_duplicates().dropna(axis=1,how='all')
+        if len(query_names_df):
+            query_names_df=query_names_df.sort_values(by='createdate',ascending=False,ignore_index=True)
+            return query_names_df
+        else:
+            return pd.DataFrame()
+    def upload_ohlc(self,df):
+        """
+            Validationn ffor getdata.py code to  upload ohlc value
+        """
+        candle_stick_tbl=self.tables["candle_stick_log_table"]
+        last_date=self.fetch_tables(table_name=candle_stick_tbl).iloc[-1]['date']
+        new_data=df[df['date']>last_date]
+        try:
+            print("uploading new OHLC")
+            self.sql.upload_to_table(df=new_data, table_name=candle_stick_tbl, if_exists='append')
+        except Exception as e:
+            print(e)

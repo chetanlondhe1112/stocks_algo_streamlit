@@ -77,7 +77,7 @@ def angelbrok_login(angel_obj,angel_user,angel_pwd,totp_key):
         
 def customer_data():
 	all_cust={}
-	customer_table_df=sql.fetch_tables(table_name=customer_tbl)[["name","angel_user","angel_pwd","totpkey"]]
+	customer_table_df=sql.fetch_tables(table_name=customer_tbl)[["name","angel_user","angel_pwd","totpkey","fin_q"]]
 	
 	for i in range(len(customer_table_df)):
 		cus_df=customer_table_df.iloc[i].to_dict()
@@ -153,8 +153,6 @@ def obj_ls_di(cus_obj_dict=dict):
 	print("\nobj dict\n",obj_dict)
 	return obj_list,obj_dict
 
-
-
 def get_instruments():
 	global instrument_df
 	url = 'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json'
@@ -183,7 +181,6 @@ def get_token_and_exchange(name): # get_token_and_exchange('BANKNIFTY27OCT22FUT'
 	exchange = instrument_df.loc[name]['exch_seg']
 	return symboltoken, exchange
 
-
 def angel_place_order(obj,transaction_type, tsymbol, ttoken,fin_q): # Change Product type to MIS ----> INTRADAY (from ---> CARRYFORWARD )
 	global orderparams
 	
@@ -197,7 +194,7 @@ def angel_place_order(obj,transaction_type, tsymbol, ttoken,fin_q): # Change Pro
 	# pdb.set_trace()
 	try:					
 		# Need to add looping over customers object									
-		orderId=name.placeOrder(orderparams) # populate the customer dictionary with order id
+		#orderId=name.placeOrder(orderparams) # populate the customer dictionary with order id
 		print(get_key(name))
 		print(tsymbol, " The order id is: {}".format(orderId))
 		time_now = datetime.datetime.now().time().replace(microsecond=0)
@@ -279,16 +276,18 @@ def get_symbol(bnf_ltp):
 	df_tl.to_csv("angel_trade_log_list.csv")
 	return strike_put,strike_call, CE_Symbol, CE_Token, PE_Symbol, PE_Token
 
-	
 # customer all data
 all_cust=customer_data()
 
 all_cust=get_obj(customer_dict=all_cust)	#updated dictionary with objects
-
 obj_list,obj_dict=obj_ls_di(cus_obj_dict=all_cust)
+print(obj_dict)
+bnf_ltp = obj_dict['sridharan'].ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
+bnf_dic_log_df=pd.DataFrame(data={"date":dt.datetime.now(),"bnf_ltp":bnf_ltp},index=[0])
+print(bnf_dic_log_df)
 
-bnf_ltp = obj.ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
-
+bnf_dic_log_df.to_csv(path_or_buf="D:/Arkonet Project/Project-06/Code/stocks_algo_streamlit/stocks_algo_streamlit/st_dash/login/csv/ltp_data.csv",mode='a',header=False,index=False)
+"""D:\Arkonet Project\Project-06\Code\stocks_algo_streamlit\stocks_algo_streamlit\st_dash\login\csv
 # Entry conditions read
 #entry_con_df = pd.read_csv('Entry_conditions.csv', index_col=0)
 entry_con_df=sql.fetch_tables(entry_conditions)
@@ -354,7 +353,7 @@ while True:
 		break
 
 print(obj_dict)
-"""
+
 dat=historic_data(object=obj)
 
 new = pd.DataFrame.from_dict(dat['data'])
@@ -366,7 +365,7 @@ xval = make_straddle('BANKNIFTY', '29MAR23', 100)
 print(xval)
 instrument_df = get_instruments()
 print(instrument_df)
-"""
+
 # pdb.set_trace()
 print(obj_list)
 for name in obj_list:
@@ -430,34 +429,35 @@ while True:
 	print("\n")
 	# pdb.set_trace()
 	for obj in obj_list:
-		print(get_key(obj))	
+		ang_user=get_key(obj)	
 		print(obj)
+		fin_q=all_cust[ang_user]['fin_q']
 		if val == "1":	
 			# transaction_type = "BUY"
 			print('Buying CALL ----> ')
 			# pdb.set_trace()
-			angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=)
+			angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
 			time.sleep(3)
 			order_status(obj=obj)
 			break
 		elif val == "2":	
 			# transaction_type = "BUY"
 			print('Buying PUT ----> ')
-			#angel_place_order("BUY", PE_Symbol, PE_Token)
+			angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
 			time.sleep(3)
 			order_status(obj=obj)
 			break
 		elif val == "3":	
 			# transaction_type = "SELL"
 			print('Selling CALL ----> ')
-			#angel_place_order("SELL", CE_Symbol, CE_Token)
+			angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
 			time.sleep(3)
 			order_status(obj=obj)
 			break
 		elif val == "4":	
 			# transaction_type = "SELL"
 			print('Selling PUT ----> ')
-			#angel_place_order("SELL", PE_Symbol, PE_Token)
+			angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
 			time.sleep(3)
 			order_status(obj=obj)
 			break
@@ -469,9 +469,9 @@ while True:
 		else:
 			print("\n")
 			print("Wrong Entry  ---> Please retry ")
-			# break
+			break
 			# pdb.set_trace()
-"""
+
 while True:
 	bnf_ltp = obj.ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
 	#bnf_ltp=44263
@@ -492,20 +492,25 @@ while True:
 		EOD=time_now>time_15_15
 		print("BANKNIFTY LTP is hitting profit-------> ", current_value)
 		print("BANKNIFTY LTP is hitting loss-------> ", current_stop)
-		if current_value:
-			print("Profit Reached")
-			print('Selling CALL ----> ')
-			#angel_place_order("SELL", CE_Symbol, CE_Token)
-			break
-		if current_stop:
-			print("Stop Loss Reached")
-			print('Selling CALL ----> ')
-			#angel_place_order("SELL", CE_Symbol, CE_Token)
-			break
-		if EOD:
-			print("EOD Reached")
-			#angel_place_order("SELL", CE_Symbol, CE_Token)
-			break
+		for obj in obj_list:
+			ang_user=get_key(obj)	
+			print(obj)
+			fin_q=all_cust[ang_user]['fin_q']
+		
+			if current_value:
+				print("Profit Reached")
+				print('Selling CALL ----> ')
+				angel_place_order(obj,"SELL", CE_Symbol, CE_Token,fin_q)
+				break
+			if current_stop:
+				print("Stop Loss Reached")
+				print('Selling CALL ----> ')
+				angel_place_order(obj,"SELL", CE_Symbol, CE_Token,fin_q)
+				break
+			if EOD:
+				print("EOD Reached")
+				angel_place_order(obj,"SELL", CE_Symbol, CE_Token,fin_q)
+				break
 	if choice=='2':
 		time_now = datetime.datetime.now().time().replace(microsecond=0)
 		print(time_now)
@@ -518,20 +523,23 @@ while True:
 		EOD=time_now>time_15_15
 		print("BANKNIFTY LTP is hitting profit-------> ", current_value)
 		print("BANKNIFTY LTP is hitting loss-------> ", current_stop)	
-		if current_value:
-			print("Profit Reached")
-			print('Selling PUT ----> ')
-			#angel_place_order("SELL", PE_Symbol, PE_Token)
-			break
-		if current_stop:
-			print("Stop Loss Reached")
-			print('Selling PUT ----> ')
-			#angel_place_order("SELL", PE_Symbol, PE_Token)
-			break
-		if EOD:
-			print("EOD Reached")
-			#angel_place_order("SELL", PE_Symbol, PE_Token)
-			break
-sys.exit()"""
-
-
+		for obj in obj_list:
+			ang_user=get_key(obj)	
+			print(obj)
+			fin_q=all_cust[ang_user]['fin_q']
+			if current_value:
+				print("Profit Reached")
+				print('Selling PUT ----> ')
+				angel_place_order(obj,"SELL", PE_Symbol, PE_Token,fin_q)
+				break
+			if current_stop:
+				print("Stop Loss Reached")
+				print('Selling PUT ----> ')
+				angel_place_order(obj,"SELL", PE_Symbol, PE_Token,fin_q)
+				break
+			if EOD:
+				print("EOD Reached")
+				angel_place_order(obj,"SELL", PE_Symbol, PE_Token,fin_q)
+				break
+sys.exit()
+"""
