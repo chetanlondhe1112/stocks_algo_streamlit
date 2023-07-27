@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 from Home import sql,sqlmethods
 
+# CSS file
+with open('css/homestyle.css') as f:
+    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 tables=sql.tables
 entry_conditions_tbl=tables["entry_conditions"]
@@ -20,7 +23,7 @@ with entry_cond_tab:
     edf=dbm.fetch_tables(entry_conditions_tbl)
 
     st.title("Entry Conditions")
-
+    edf=edf.reset_index().drop(columns=['id'])
     st.write(edf)
 
 with net_cond_tab:

@@ -77,6 +77,7 @@ class sqlalchemy_connect:
             time.sleep(2)
             return engine
         except Exception as e:
+            self.error_log(e,validation="database connection is not availbale.")
             print(str(self.now_time())+status_str+"Failed")
             print(str(self.now_time())+" = Error : "+str(e))
             return ''
@@ -95,6 +96,7 @@ class sqlalchemy_connect:
             df=pd.read_sql_table(table_name,self.engine)
             return df
         except Exception as e:
+            self.error_log(e,validation="Error to Fetch ,Table:'"+str(table_name)+"'")
             print(e)
 
     def fetch_table_u(self,table_name=str):
@@ -116,6 +118,7 @@ class sqlalchemy_connect:
             df.to_sql(table_name,con=self.engine,if_exists=if_exists,index=0)
             return True
         except Exception as e:
+            self.error_log(e,validation="Error to upload,Table:'"+str(table_name)+"'")
             print(e)
 
     def ohlc_validation(self):
@@ -137,12 +140,14 @@ class sqlalchemy_connect:
             query_names_df=query_names_df.sort_values(by='createdate',ascending=False,ignore_index=True)
             return query_names_df
         else:
+            self.error_log(error="Access Token Error",validation="Error to Fetch access token,Table:'"+str(table_name)+"'")
             return pd.DataFrame()
         
     def fetch_query(self,query=str):
         try:
             return pd.read_sql_query(sql=query,con=self.engine)
         except Exception as e:
+            self.error_log(e,sql=query)
             print(e)
             return 0
             
@@ -168,6 +173,7 @@ class sqlalchemy_connect:
                 print("Todays Ohlc collected")
                 return 1
         except Exception as e:
+            self.error_log(e,validation="Error to upload OHLC values,Table:'"+str(candle_stick_tbl)+"'")
             print(e)
         
     def upload_entry_conditions(self,df):
@@ -185,4 +191,14 @@ class sqlalchemy_connect:
         
             #status=.upload_to_table(df=df_pairs_up,table_name=entry_conditions,if_exists="append")
 
-        
+    def error_log(self,error=str,validation=None,sql=None):
+        error_log_table=self.tables["error_log_table"]
+        error_datetime=datetime.now()
+        try:
+            dic={"error":error,"createdate":error_datetime,"validation":validation,"sql_query":sql}
+            print("## error log :",dic)
+            df=pd.DataFrame([dic])
+            #df=pd.DataFrame(data=dic)
+            self.upload_to_table(df=df,table_name=error_log_table,if_exists="append")  
+        except Exception as e:
+            print(e)

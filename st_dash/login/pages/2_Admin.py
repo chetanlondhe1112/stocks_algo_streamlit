@@ -13,12 +13,18 @@ import pdb
 import pandas as pd
 from Home import sql,sqlmethods
 
+# CSS file
+with open('css/homestyle.css') as f:
+    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+
 tables=sql.tables
 customer_tbl=tables["customer_table"]
 entry_conditions=tables["entry_conditions"]
 order_log_table=tables["order_log_table"]
 user_table=tables["user_table"]
 access_token_table=tables["access_token_table"]
+error_log_table=tables["error_log_table"]
 
 if not st.session_state["authentication_status"]:
     st.error("Please Login")
@@ -27,8 +33,9 @@ if not st.session_state["authentication_status"]:
 dbm=sqlmethods(sql,st.session_state["authentication_status"])
 
 st.title("Admin")
-customer_tab,zerodha_tab,defaults,bnf_log=st.tabs(["Customer Registration","Zerodha Credentials","Set Values","bnf_log"])
+customer_tab,zerodha_tab,defaults,bnf_log,error_log=st.tabs(["Customer Registration","Zerodha Credentials","Set Values","bnf_log","Error Log"])
 regi_tab,log_tab,upd_tab=customer_tab.tabs(['Registration','Register','Update'])
+tls_error,st_tls_error=error_log.tabs(["TLS Error Log","Dashboard Error Log"])
 
 with regi_tab:
     col=st.columns((1,1,1))
@@ -298,4 +305,10 @@ with bnf_log:
     st.title("BNF LTP Log")
     st.dataframe(read_ltp(),use_container_width=True)
 
+with tls_error:
+    st.header("TLS Error Log")
+
+    tls_error_df=dbm.fetch_tables(table_name=error_log_table,index_col='id')
+    tls_error_df.index=tls_error_df['id']
+    st.dataframe(tls_error_df,use_container_width=True)
     

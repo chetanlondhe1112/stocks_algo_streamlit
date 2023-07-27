@@ -29,6 +29,7 @@ def get_login(api_k, api_s,access_token):
 
 def zrd_login(connection_object):
     access_token_l=[]
+    #sql=sqlalchemy_connect(username="chetan")
     sql=connection_object
     print("Collecting Access Token")
     access_tk_df=sql.fetch_access_tokens()
@@ -41,6 +42,7 @@ def zrd_login(connection_object):
 
     if today!=last_date:
         #access_token=str(access_tk_df.iloc[0]["access_token"])
+        sql.error_log(error="invalid access token",validation="token is not available for today")
         print("token is not available for today")
         return 0
     elif today==last_date:

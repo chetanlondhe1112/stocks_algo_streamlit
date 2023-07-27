@@ -28,6 +28,7 @@ candle_stick_log_table="candle_stick_log"
 customer_table="customer"
 entry_conditions="entryconditions"
 order_log_table="order_log"
+error_log_table="tls_error_log"
 
 [st_algo_mail]
 mail = "stockanalyser2022@gmail.com"
