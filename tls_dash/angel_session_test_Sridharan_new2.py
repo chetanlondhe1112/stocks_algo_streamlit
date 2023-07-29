@@ -140,7 +140,7 @@ obj_list =[obj]
 obj_dict ={obj:"Sridharan"}
 # obj_dict ={obj:"Nidhi"}
 
-"""
+
 
 print("check obj")
 time_15_15 = datetime.time(15,10)
@@ -181,7 +181,7 @@ while True:
 
 	else:
 		break
-"""
+
 def roundup(x):
 	return x if x % 100 == 0 else x + 100 - x % 100
 
@@ -235,7 +235,7 @@ def get_symbol():
 	return strike_put,strike_call, CE_Symbol, CE_Token, PE_Symbol, PE_Token
 
 get_symbol()
-"""
+
 # pdb.set_trace()
 
 
@@ -428,7 +428,6 @@ while True:
 			angel_place_order("SELL", PE_Symbol, PE_Token)
 			break
 sys.exit()
-"""
 
 
 

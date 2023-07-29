@@ -4,20 +4,16 @@ import pandas as pd
 from PIL import Image
 from datetime import datetime
 import streamlit_authenticator as stauth
-from sqlalchemy import create_engine,text
-from validate_email_address import validate_email
-from password_validator import PasswordValidator
-import smtplib, ssl
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import re
+from sqlalchemy import text
 from connection.db_conn import sqlalchemy_connect
 from connection.authentication import authenticate
 from connection.db_methods import sqlmethods
+#from streamlit_lottie import st_lottie
 
-username="chetan"
+if 'sq_conn' not in st.ss
+
 sql=sqlalchemy_connect()
-at =authenticate(connection_object=sql)
+at =authenticate(connection_link=connection_object=sql)
 tables_dict=sql.read_config()
 
 db_tables=tables_dict["db_tables"]
@@ -63,6 +59,16 @@ with col1[0]:
     col1[0].markdown('# 📈:red[Stocks Algo ]')
     #col1[0].info("Username:chetan|Password:Chetan@3333")
     #col1[0].image(st.session_state["Home_Image"], caption='Stocks Analyser',use_column_width=True)
+
+_="""
+def lottie_files(file_path=str):
+    with open(file=file_path,mode="r") as f:
+        return json.load(f)
+
+def lottie_select():
+    lottie_intro=lottie_files(file_path="styling/Lotti/hello.json")
+    return st_lottie(animation_data=lottie_intro,speed=1,reverse=False,loop=True,quality="low",height=600)
+"""
 
 _=""" 
     Creating Connection 
