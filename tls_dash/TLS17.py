@@ -42,8 +42,8 @@ def token_generation():
 
 df= pd.read_csv("D:/Arkonet Project/Project-06/Code/stocks_algo_streamlit/stocks_algo_streamlit/tls_dash/csvs/OpenAPIScripMaster1.csv",low_memory=False,index_col=0)['expiry']
 print(df)
-'''
-token_generation()
+
+#token_generation()
 # Fetch the candle stick data
 while True:
     
@@ -273,4 +273,4 @@ while True:
         #if gap is not 5mins, again get_data
 
         #pdb.set_trace()
-        time.sleep(5)'''
+        time.sleep(5)

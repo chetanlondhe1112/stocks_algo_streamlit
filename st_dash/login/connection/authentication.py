@@ -1,8 +1,6 @@
 import time
 import streamlit as st
 import pandas as pd
-from PIL import Image
-from datetime import datetime
 import streamlit_authenticator as stauth
 from validate_email_address import validate_email
 from password_validator import PasswordValidator
@@ -11,18 +9,22 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import re
 from sqlalchemy import text
+import math
+import random
 
-_="""
-    Function Definations
-"""
 
-_=""" Supportive function """
+class messages:
+    def __init__(self):
+        pass
 
-class authenticate:  
+class authenticate:
+    """
+        authenticate class is build to provide the streamlit authentication for dashboard   
+    """  
 
-    def __init__(self,connection_object=object):
+    def __init__(self,connection_link=str,connection_object=object):
         self.sql=connection_object
-        self.engine=self.sql.engine
+        self.engine=connection_link
         self.mail_info=self.sql.st_algo_mail
         self.sender_mail=self.mail_info['mail']
         self.sender_mail_password=self.mail_info['password']
@@ -33,25 +35,20 @@ class authenticate:
             This function collects all users credentials for login process.
         """
         user_table = self.tables['user_table']
-        #try:
-        q="SELECT * FROM " + user_table
-        df = pd.read_sql_query(q,self.sql.engine)
-        emails = list(df['email'])
-        usernames = list(df['username'])
-        hashed_passwords = list(df['password'])
-        return emails,usernames,hashed_passwords
-    
-        #except Exception as e:
-        #    print(e)
+        try:
+            q="SELECT * FROM " + user_table
+            df = pd.read_sql_query(q,self.sql.engine)
+            emails = list(df['email'])
+            usernames = list(df['username'])
+            hashed_passwords = list(df['password'])
+            return emails,usernames,hashed_passwords
+        except Exception as e:
+            print(e)
 
     # Function for :Reset Password
     #@st.experimental_memo(suppress_st_warning=True,show_spinner=False)
     def reset_password_mail_verfication(self,receiver_email=str):
-        import smtplib, ssl
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
-        import math
-        import random
+        
         digits="0123456789"
         OTP=""
         for i in range(6):
@@ -71,7 +68,7 @@ class authenticate:
 
         # Create the plain-text and HTML version of your message
         text = """\
-        Welcome,to the Stock_analyser!
+        Welcome,to the Stock Algo!
 
         Hello,
         Here is your OTP

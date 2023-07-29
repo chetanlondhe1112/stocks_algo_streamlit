@@ -4,9 +4,9 @@ import pandas as pd
 
 class sqlmethods:
 
-    def __init__(self,connection_object=object,username=str):
+    def __init__(self,connection_link=str,connection_object=object,username=str):
         self.sql=connection_object
-        self.engine=self.sql.engine
+        self.engine=connection_link
         self.tables=self.sql.tables
         self.user=username
 
@@ -123,5 +123,4 @@ class sqlmethods:
         else:
             return self.fetch_tables(order_table)
             
-
-
+    

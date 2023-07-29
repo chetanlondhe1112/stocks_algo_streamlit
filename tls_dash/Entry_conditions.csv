@@ -1,3 +1,3 @@
-,Start Date,End Date,High,Low,Entry Above High,Entry Below Low,Stop Loss Above Entry,Stop Loss Below Entry,Target Profit Above Entry,Target Profit Below Entry,Entry Date,Position,Entry_value
-4,2023-07-26 13:15:00,2023-07-26 13:45:00,46040.3,45931.35,46040.3,45931.35,45931.35,46040.3,46203.725000000006,45767.92499999999,,,
-5,2023-07-26 13:45:00,2023-07-26 14:15:00,46095.9,45931.35,46095.9,45931.35,45931.35,46095.9,46342.725000000006,45684.524999999994,,,
+,Start Date,End Date,High,Low,Entry Above High,Entry Below Low,Stop Loss Above Entry,Stop Loss Below Entry,Target Profit Above Entry,Target Profit Below Entry,Entry Date,Position,Entry_value,Exit Date,Result,Profit/Loss,Target Profit value
+7,2023-07-28 09:45:00,2023-07-28 10:15:00,45526.3,45376.2,45526.3,45376.2,45376.2,45526.3,45751.45000000001,45151.04999999999,,,,,,,
+8,2023-07-28 10:15:00,2023-07-28 10:45:00,45521.05,45376.2,45521.05,45376.2,45376.2,45521.05,45738.32500000001,45158.92499999999,,,,,,,

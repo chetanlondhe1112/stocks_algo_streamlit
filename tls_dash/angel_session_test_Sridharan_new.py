@@ -35,15 +35,28 @@ apikey = 'DodjVpCE' # Sridharan knsridharan@winrich.in
 #pwd = 'KnsAng@12#'
 #pwd = '1985'
 #kiteSetupKeyForTOTP = 'ZT4OKWGC3TXIRPRZJLDKX3IBCM'
-expiry = date(2023, 7, 27) # For Future
+#expiry = date(2023, 7, 27) # For Future
+#sql.expiry_date()
 #time_15_15 = datetime.time(15,15)
 
 # pdb.set_trace()
 exch_seg = "NFO"
-fin_quantity = 25
+#fin_quantity = 25
 # fin_quantity = 125
-fin_q = str(fin_quantity)
-
+#fin_q = str(fin_quantity)
+def expiry_date():
+	today = date.today()#+timedelta(days=7)
+	if today.strftime('%a') != 'Thu':
+		return today + dt.timedelta((3-today.weekday()) % 7 )
+	else:
+		return today
+print(expiry_date())
+expiry = expiry_date()	#date(2023, 6, 29) # For Future
+url = 'https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json'
+d = requests.get(url).json()
+token_df = pd.DataFrame.from_dict(d)
+token_df['expiry'] = pd.to_datetime(token_df['expiry']).apply(lambda x: x.date())
+token_df = token_df.astype({'strike': float})
 
 def angelbrok_obj(apiky):
 	return SmartConnect(api_key=apikey) # Sridharanss
@@ -107,21 +120,22 @@ def get_obj(customer_dict=dict):
 	print("\nCustomer dictionary with object and totp\n",customer_dict)
 	return customer_dict
 
-
 def getTokenInfo (symbol,exch_seg ='NSE',instrumenttype='OPTIDX',strike_price = '',pe_ce = '',expiry_day=None):
 	# pass
-	df= pd.read_csv("D:/Arkonet Project/Project-06/Code/stocks_algo_streamlit/stocks_algo_streamlit/tls_dash/csvs/OpenAPIScripMaster1.csv",low_memory=False)
-	print(df[df['exch_seg'] == 'NFO'])
+	#df= pd.read_csv("D:/Arkonet Project/Project-06/Code/stocks_algo_streamlit/stocks_algo_streamlit/tls_dash/csvs/OpenAPIScripMaster1.csv",low_memory=False)
+	#print(df.tail(1000)([df['exch_seg'] == 'NFO'] & df['expiry']==expiry_day))
+	#print(df['expiry']=='03AUG2023')
+	df=token_df
 	strike_price = strike_price*100
 	if exch_seg == 'NSE':
 		eq_df = df[(df['exch_seg'] == 'NSE') ]
-		print("\ntoken fetching NSE\n",eq_df[eq_df['name'] == symbol])
+		#print("\ntoken fetching NSE\n",eq_df[eq_df['name'] == symbol])
 		return eq_df[eq_df['name'] == symbol]
 	elif exch_seg == 'NFO' and ((instrumenttype == 'FUTSTK') or (instrumenttype == 'FUTIDX')):
-		print("\ntoken fetching NFO1\n",df[(df['exch_seg'] == 'NFO') & (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol)].sort_values(by=['expiry']))
+		#print("\ntoken fetching NFO1\n",df[(df['exch_seg'] == 'NFO') & (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol)].sort_values(by=['expiry']))
 		return df[(df['exch_seg'] == 'NFO') & (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol)].sort_values(by=['expiry'])
 	elif exch_seg == 'NFO' and (instrumenttype == 'OPTSTK' or instrumenttype == 'OPTIDX'):
-		print("\ntoken fetching NFO2\n",df[(df['exch_seg'] == 'NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry']))
+		#print("\ntoken fetching NFO2\n",df[(df['exch_seg'] == 'NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry']).iloc[0])
 		return df[(df['exch_seg']=='NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry'])
 	
 
@@ -197,11 +211,11 @@ def angel_place_order(obj,transaction_type, tsymbol, ttoken,fin_q): # Change Pro
 	# pdb.set_trace()
 	try:					
 		# Need to add looping over customers object									
-		#orderId=name.placeOrder(orderparams) # populate the customer dictionary with order id
-		print(get_key(name))
-		orderId=333
+		orderId=name.placeOrder(orderparams) # populate the customer dictionary with order id
+		print(orderId)
+		#orderId=333
 		print(tsymbol, " The order id is: {}".format(orderId))
-		time_now = datetime.datetime.now().time().replace(microsecond=0)
+		time_now = datetime.now().time().replace(microsecond=0)
 		trade_dict_11 = {"time": time_now}
 		print(trade_dict_11)
 		print(time_now)
@@ -210,8 +224,8 @@ def angel_place_order(obj,transaction_type, tsymbol, ttoken,fin_q): # Change Pro
 
 	except Exception as e:			
 		print("\n")
-		print(obj_dict[name], " ---> Order placement subset failed: for ", tsymbol)
-		time_now = datetime.datetime.now().time().replace(microsecond=0)
+		print(obj_dict[name], " ---> Order placement subset failed: for ", str(tsymbol))
+		time_now = datetime.now().time().replace(microsecond=0)
 		order_fail={"time":time_now, "name":obj_dict[name], "symbol":tsymbol}
 		print(time_now)
 		print("\n")
@@ -219,14 +233,15 @@ def angel_place_order(obj,transaction_type, tsymbol, ttoken,fin_q): # Change Pro
 # pdb.set_trace()
 def order_status(obj):
 	try:
-		Trade_net = obj.position()['data'] # Angel Trade Net Positions
-		nobj = get_key(obj)
-		Trade_df=pd.DataFrame(Trade_net)
-		Angel_net_df = Trade_df[Trade_df['symbolname']=='BANKNIFTY']
-		Angel_net_df.to_csv("Angel_net_positions_" + obj_dict[name]+".csv")
+		if type(obj)!="<class 'str'>":
+			Trade_net = obj.position()['data'] # Angel Trade Net Positions
+			nobj = get_key(obj)
+			Trade_df=pd.DataFrame(Trade_net)
+			Angel_net_df = Trade_df[Trade_df['symbolname']=='BANKNIFTY']
+			Angel_net_df.to_csv("Angel_net_positions_" + obj_dict[name]+".csv")
 		
 	except Exception as e:
-		print(" ---> Order net positions subset csv file creation failed for :  ", nobj)
+		print(" ---> Order net positions subset csv file creation failed for :  ", get_key(obj))
 		print("\n")
 
 def roundup(x):
@@ -249,8 +264,10 @@ def get_symbol(bnf_ltp):
 	print(strike_put)
 
 	#expiry_day = datetime.date(2023,5,25) #<------------------------Change every Week ----------------------->
-	expiry_day = dt.date(2023,7,27) #praveen- change expiry every week before friday start# need to work with dashbboard  
-	expiry_day='2023-7-27'
+	#expiry_day = dt.date(2023,7,27) #praveen- change expiry every week before friday start# need to work with dashbboard  
+	#expiry_day=expiry_date()
+	expiry_day=expiry_date()
+	
 	print("expiry ",expiry_day)
 	ATMStrike1 = strike_call
 	ATMStrike2 = strike_put
@@ -282,14 +299,13 @@ def get_symbol(bnf_ltp):
 	df_tl.to_csv("angel_trade_log_list.csv")
 	return strike_put,strike_call, CE_Symbol, CE_Token, PE_Symbol, PE_Token
 
-"""
 # customer all data
 all_cust=customer_data()
 
 all_cust=get_obj(customer_dict=all_cust)	#updated dictionary with objects
 obj_list,obj_dict=obj_ls_di(cus_obj_dict=all_cust)
 print(obj_dict)
-bnf_ltp = obj_dict['sridharan'].ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
+bnf_ltp = obj_dict['Ashok'].ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
 bnf_dic_log_df=pd.DataFrame(data={"date":dt.datetime.now(),"bnf_ltp":bnf_ltp},index=[0])
 print(bnf_dic_log_df)
 
@@ -325,10 +341,12 @@ print(entry_con_df.iloc[-1]['Entry Below Low'])
 today = date.today()
 
 #pdb.set_trace()
-choice=0
+choice="1"
 print("Collecting LTP values....")
 while True:
 	obj=obj_list[1]
+
+	print(get_key(obj))
 	#for obj in obj_list:
 	if  entry_con_df.iloc[-1]['Start Date'].date()==today:
 		#bnf_ltp=44706
@@ -387,7 +405,8 @@ for name in obj_list:
 
 			Trade_net = name.position()['data'] # Angel Trade Net Positions
 			Trade_df=pd.DataFrame(Trade_net)
-			Angel_net_df = Trade_df[Trade_df['symbolname']=='BANKNIFTY']
+			#Angel_net_df = Trade_df[Trade_df['symbolname']=='BANKNIFTY']
+			#Angel_net_df = Trade_df[Trade_df['symbolname']=='NIFTY50']
 			Angel_net_df.to_csv("Angel_net_positions_" +nobj+".csv")
 			angel_up=Angel_net_df.copy()
 			angel_up.insert(0,"customerusername",nobj)
@@ -430,65 +449,86 @@ while True:
 	print(CE_Symbol, " , ",  PE_Symbol)
 	#val = input("Enter your trade action value (1)Buy Call , (2)Buy Put,  (3)Sell Call , (4)Sell Put , (5) EXIT loop : ----> ")
 	#print("Enter your trade action value (1)Buy Call , (2)Buy Put,  (3)Sell Call , (4)Sell Put , (5) EXIT loop : ----> ")
+	print(choice)
 	val=choice
 	
 	print("You have chosen ---> ", val)
 	print("\n")
 	# pdb.set_trace()
-	for obj in obj_list:
-		ang_user=get_key(obj)	
-		print(obj)
-		fin_q=all_cust[ang_user]['fin_q']
-		if val == "1":	
-			# transaction_type = "BUY"
-			print('Buying CALL ----> ')
-			# pdb.set_trace()
-			angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
+	
+	if val == "1":	
+		
+		# transaction_type = "BUY"
+		print('Buying CALL ----> ')
+		# pdb.set_trace()
+		for obj in obj_list:
+			ang_user=get_key(obj)	
+			print(obj)
+			fin_q=all_cust[ang_user]['fin_q']
+			#angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
 			time.sleep(3)
 			order_status(obj=obj)
-			break
-		elif val == "2":	
-			# transaction_type = "BUY"
-			print('Buying PUT ----> ')
-			angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
+		break
+	elif val == "2":	
+		# transaction_type = "BUY"
+		print('Buying PUT ----> ')
+		for obj in obj_list:
+			ang_user=get_key(obj)	
+			print(obj)
+			fin_q=all_cust[ang_user]['fin_q']
+			#angel_place_order(obj,"BUY", PE_Symbol, PE_Token,fin_q=fin_q)
+
+			#angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
 			time.sleep(3)
 			order_status(obj=obj)
-			break
-		elif val == "3":	
-			# transaction_type = "SELL"
-			print('Selling CALL ----> ')
-			angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
+		break
+	elif val == "3":	
+		# transaction_type = "SELL"
+		print('Selling CALL ----> ')
+		for obj in obj_list:
+			ang_user=get_key(obj)	
+			print(obj)
+			fin_q=all_cust[ang_user]['fin_q']
+			#angel_place_order(obj,"SELL", CE_Symbol, CE_Token,fin_q=fin_q)
+			#angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
 			time.sleep(3)
 			order_status(obj=obj)
-			break
-		elif val == "4":	
-			# transaction_type = "SELL"
-			print('Selling PUT ----> ')
-			angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
+		break
+	elif val == "4":	
+		# transaction_type = "SELL"
+		print('Selling PUT ----> ')
+		for obj in obj_list:
+			ang_user=get_key(obj)	
+			print(obj)
+			fin_q=all_cust[ang_user]['fin_q']
+			#angel_place_order(obj,"SELL", PE_Symbol, PE_Token,fin_q=fin_q)
+			#angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
 			time.sleep(3)
 			order_status(obj=obj)
-			break
-		elif val == "1" or val == "2" or val == "3" or val == "4":
-			print("\n")
-			print("exiting Loop")
-			break
-			#break	
-		else:
-			print("\n")
-			print("Wrong Entry  ---> Please retry ")
-			break
-			# pdb.set_trace()
+		break
+	elif val == "1" or val == "2" or val == "3" or val == "4":
+		print("\n")
+		print("exiting Loop")
+		break
+		#break	
+	else:
+		print("\n")
+		print("Wrong Entry  ---> Please retry ")
+		#break
+		continue
+		# pdb.set_trace()
 
 while True:
-	bnf_ltp = obj.ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
+	#bnf_ltp = obj.ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
 	#bnf_ltp=44263
+	bnf_ltp = obj_dict['Ashok'].ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
 	print("bnf_ltp"+str(bnf_ltp))
 	time.sleep(1)
 	#check if current time is 12:15 and no position has been entered, then sys exit
 	#check whether the time is 44:30 sec or time is 14:30 sec, delete nifty bank csv and then invoke tls17
 
 	if choice=='1':
-		time_now = datetime.datetime.now().time().replace(microsecond=0)
+		time_now = datetime.now().time().replace(microsecond=0)
 		print(time_now)
 		print("\n")
 		print("Choice is --> ",choice)
@@ -507,19 +547,19 @@ while True:
 			if current_value:
 				print("Profit Reached")
 				print('Selling CALL ----> ')
-				angel_place_order(obj,"SELL", CE_Symbol, CE_Token,fin_q)
+				#angel_place_order(obj,"SELL", CE_Symbol, CE_Token,fin_q)
 				break
 			if current_stop:
 				print("Stop Loss Reached")
 				print('Selling CALL ----> ')
-				angel_place_order(obj,"SELL", CE_Symbol, CE_Token,fin_q)
+				#angel_place_order(obj,"SELL", CE_Symbol, CE_Token,fin_q)
 				break
 			if EOD:
 				print("EOD Reached")
-				angel_place_order(obj,"SELL", CE_Symbol, CE_Token,fin_q)
+				#angel_place_order(obj,"SELL", CE_Symbol, CE_Token,fin_q)
 				break
 	if choice=='2':
-		time_now = datetime.datetime.now().time().replace(microsecond=0)
+		time_now = datetime.now().time().replace(microsecond=0)
 		print(time_now)
 		print("\n")
 		print("Choice is --> ",choice)
@@ -548,5 +588,5 @@ while True:
 				print("EOD Reached")
 				angel_place_order(obj,"SELL", PE_Symbol, PE_Token,fin_q)
 				break
-sys.exit()"""
+sys.exit()
 

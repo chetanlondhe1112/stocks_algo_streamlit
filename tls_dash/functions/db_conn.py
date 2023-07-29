@@ -1,4 +1,5 @@
 from datetime import datetime,date
+from datetime import timedelta
 from sqlalchemy import create_engine,text
 import time
 import tomlkit
@@ -202,3 +203,10 @@ class sqlalchemy_connect:
             self.upload_to_table(df=df,table_name=error_log_table,if_exists="append")  
         except Exception as e:
             print(e)
+        
+    def expiry_date(self):
+        today = date.today()#+timedelta(days=7)
+        if today.strftime('%a') != 'Thu':
+            return today + timedelta((3-today.weekday()) % 7 )
+        else:
+            return today
