@@ -10,7 +10,7 @@ class sqlalchemy_connect:
     def __init__(self):
         self.file_path=config_file_path
         self.config=self.read_config()
-        self.__cred=self.config['db_server']
+        self.cred=self.config['db_server']
         self.tables=self.config['db_tables']
         self.st_algo_mail=self.config['st_algo_mail']
         #self.engine=self.engine()
@@ -33,7 +33,7 @@ class sqlalchemy_connect:
             with open(self.file_path, mode="rt", encoding="utf-8") as fp:
                 config=dict(tomlkit.load(fp))
                 print("\n"+str(self.now_time())+" = Configuration File Read: Success :)")
-                self.config_info(config)
+                #self.config_info(config)
                 return config
         except Exception as e:
             print("\n"+str(self.now_time())+" = Configuration File Read: Failed :(")
@@ -46,7 +46,7 @@ class sqlalchemy_connect:
         """
         return self.tables
 
-    def config_info(self,config=dict):
+    def config_info(self,configuration=dict):
         """
             Reads The Configuration file
         """
@@ -54,13 +54,13 @@ class sqlalchemy_connect:
         time.sleep(1)
         print("="*50)
         time.sleep(1)
-        print("Name: "+str(self.config['file_info']['file_name']))
-        print("Info: "+str(self.config['file_info']['info']))
-        print("Version: "+str(self.config['file_info']['version']))
+        print("Name: "+str(configuration['file_info']['file_name']))
+        print("Info: "+str(configuration['file_info']['info']))
+        print("Version: "+str(configuration['file_info']['version']))
         time.sleep(1)
         print("*"*22+"Auther"+"*"*22)
-        print("Auther Name: "+str(self.config['auther']['name']))
-        print("Auther Mail: "+str(self.config['auther']['mail']))
+        print("Auther Name: "+str(configuration['auther']['name']))
+        print("Auther Mail: "+str(configuration['auther']['mail']))
         print("="*50)
         time.sleep(1)
 
@@ -93,6 +93,6 @@ class sqlalchemy_connect:
         """
           Function to create the connection with database
         """
-        return self.sqlalchemy_connection(self.__cred)
+        return self.sqlalchemy_connection(self.cred)
 
     

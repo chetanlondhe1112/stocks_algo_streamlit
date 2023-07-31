@@ -11,12 +11,40 @@ import datetime as dt
 import time
 import pdb
 import pandas as pd
-from Home import sql,sqlmethods
-
+from Home import sql,sqlmethods,reconnection
+import numpy as np
 # CSS file
 with open('css/homestyle.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
+_=""" 
+    Refresh warning process
+"""
+if len(st.session_state) == 0:
+
+    st.warning("Please! Don't Refresh your browser.")
+
+    st.info("Always, use dashboard Default Refresh!")
+
+    _="""with st.expander('Do This:'):
+
+        video_file = open('video/dashboard_refresh.mp4', 'rb')
+
+        video_bytes = video_file.read()
+
+        st.video(video_bytes)"""
+
+    st.stop()  
+
+if not st.session_state["authentication_status"]:
+    st.error("Please Login")
+    st.stop()
+
+if not st.session_state['sq_conn']:
+    st.session_state['sq_conn']=reconnection(connection_object=sql)
+    sq_conn=st.session_state['sq_conn']
+else:
+    sq_conn=st.session_state['sq_conn']
 
 tables=sql.tables
 customer_tbl=tables["customer_table"]
@@ -26,21 +54,20 @@ user_table=tables["user_table"]
 access_token_table=tables["access_token_table"]
 error_log_table=tables["error_log_table"]
 
-if not st.session_state["authentication_status"]:
-    st.error("Please Login")
-    st.stop()
 
-dbm=sqlmethods(sql,st.session_state["authentication_status"])
-
+dbm=sqlmethods(sq_conn,sql,st.session_state["authentication_status"])
+def show_df(df):
+    df.index = np.arange(1, len(df) + 1)
+    return df
 st.title("👨‍⚖️ Admin")
 customer_tab,zerodha_tab,defaults,bnf_log,error_log=st.tabs(["📋 Customer Registration","🔐 Zerodha Credentials","📌 Set Values","🔖 BNF log","📑 Error Log"])
-regi_tab,log_tab,upd_tab=customer_tab.tabs(['Registration','Register','Update'])
-tls_error,st_tls_error=error_log.tabs(["TLS Error Log","Dashboard Error Log"])
+regi_tab,log_tab,upd_tab=customer_tab.tabs(['📝 Registration','📖 Register','✒️ Update'])
+tls_error,st_tls_error=error_log.tabs(["📑 TLS Error Log","📑 Dashboard Error Log"])
 
 with regi_tab:
     col=st.columns((1,1,1))
 
-    col[1].header("Registration")
+    col[1].header("📝 Registration")
 
     today=datetime.now()
     with st.form("Customer registration"):
@@ -90,23 +117,23 @@ with regi_tab:
 with log_tab:
     col2=st.columns((1,1,1))
 
-    col2[1].header("Register")
+    col2[1].header("📖 Register")
     #df=pd.read_sql_table(customer_tbl,con=sq_conn,index_col=['id'])
     df=dbm.fetch_tables(table_name=customer_tbl,)
-    st.write(df)
+    st.write(show_df(df))
 
 with upd_tab:
     
     col=st.columns((1,1,1))
 
-    col[1].header("Update")
-
+    col[1].header("✒️ Update")
+    
     today=datetime.now()
 
     customers_names=dbm.fetch_customers_names()
 
     customer_name=st.selectbox("Select The Customer",options=customers_names)
-
+    
     df=dbm.fetch_customer(customer_name=customer_name)
 
     with st.form("Customer Update"):
@@ -197,8 +224,8 @@ with zerodha_tab:
     #get_login(api_k, api_s)
 
     from PIL import Image
-    tit_col=st.columns((0.3,1,0.2))
-    tit_col[1].header("Access Token Manager")
+    tit_col=st.columns((0.7,1,0.5))
+    tit_col[1].header("🔐 Access Token Manager")
     col=st.columns((0.5,1,0.5))
     #image = Image.open('scratch\study\project_features\login\kite logo.png')
     if 'tkn_df' not in st.session_state:
@@ -296,17 +323,19 @@ with zerodha_tab:
                 st.dataframe(st.session_state['tkn_df'],use_container_width=True)
 
 with defaults:
-    st.header("Set Values")
+    st.header("📌 Set Values")
 
 with bnf_log:
     
     def read_ltp():
         return pd.read_csv("D:\Arkonet Project\Project-06\Code\stocks_algo_streamlit\stocks_algo_streamlit\st_dash\login\csv\ltp_data.csv")
-    st.header("BNF LTP Log")
-    st.dataframe(read_ltp(),use_container_width=True)
+    st.header("🔖 BNF LTP Log")
+    bnf=read_ltp()
+    bnf.columns=['Date','LTP Value']
+    st.dataframe(show_df(bnf).sort_values(by='Date',ascending=False),use_container_width=True)
 
 with tls_error:
-    st.header("TLS Error Log")
+    st.header("📑 TLS Error Log")
 
     tls_error_df=dbm.fetch_tables(table_name=error_log_table,index_col='id')
     tls_error_df.index=tls_error_df['id']

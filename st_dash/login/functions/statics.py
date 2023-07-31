@@ -18,4 +18,4 @@ class statics:
             -quality=str|"low","high"
         """
         lottie_intro=self.lottie_files(file_path=file_path)
-        return st_lottie(animation_data=lottie_intro,speed=1,reverse=False,loop=True,quality=quality,height=height)
+        return st_lottie(animation_source=lottie_intro,speed=1,reverse=False,loop=True,quality=quality,height=height,)

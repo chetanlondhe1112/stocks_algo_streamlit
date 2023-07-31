@@ -8,20 +8,10 @@ from sqlalchemy import text
 from connection.db_conn import sqlalchemy_connect
 from connection.authentication import authenticate
 from connection.db_methods import sqlmethods
-#from streamlit_lottie import st_lottie
-
-if 'sq_conn' not in st.ss
-
-sql=sqlalchemy_connect()
-at =authenticate(connection_link=connection_object=sql)
-tables_dict=sql.read_config()
-
-db_tables=tables_dict["db_tables"]
-customer_tbl=db_tables["customer_table"]
-candle_stick_tbl=db_tables["candle_stick_log_table"]
-entry_conditions=db_tables["entry_conditions"]
-order_log_table=db_tables["order_log_table"]
-
+from functions.streamlit_dbconn import reconnection
+from functions.statics import statics 
+from streamlit_lottie import st_lottie
+import json
 
 _=""" Defaults"""
 
@@ -49,26 +39,56 @@ st.set_page_config(
 with open('css/homestyle.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
+
+if 'sq_conn' not in st.session_state:
+    st.session_state['sq_conn']=0
+@st.cache_data()
+def sq():
+    return sqlalchemy_connect()
+
+sql=sq()
+
+if not st.session_state['sq_conn']:
+    st.session_state['sq_conn']=reconnection(connection_object=sql)
+    sq_conn=st.session_state['sq_conn']
+else:
+    sq_conn=st.session_state['sq_conn']
+at=authenticate(connection_link=sq_conn,connection_object=sql)
+    
+
+tables_dict=sql.read_config()
+
+db_tables=tables_dict["db_tables"]
+customer_tbl=db_tables["customer_table"]
+candle_stick_tbl=db_tables["candle_stick_log_table"]
+entry_conditions=db_tables["entry_conditions"]
+order_log_table=db_tables["order_log_table"]
+
+
 #Page columns layout
 #if "Home_Image" not in st.session_state:
 #    st.session_state["Home_Image"]=Image.open('stock3.png')
 
 col1=st.columns((2,1))
 
+@st.cache_resource
+def lottie_select(file_path=str):
+    def lottie_files(file_path=str):
+        with open(file=file_path,mode="r") as f:
+            return json.load(f)
+        
+    lottie_intro=lottie_files(file_path)
+    return st_lottie(animation_source=lottie_intro,speed=1,reverse=False,loop=True,quality="low",height=550)
+
 with col1[0]:
-    col1[0].markdown('# 📈:red[Stocks Algo ]')
+    col1[0].title('📈 Stocks Algo')
     #col1[0].info("Username:chetan|Password:Chetan@3333")
-    #col1[0].image(st.session_state["Home_Image"], caption='Stocks Analyser',use_column_width=True)
+    with col1[0]:
+        lt=statics()
+        lottie_select(file_path="D:/Arkonet Project/Project-06/Code/stocks_algo_streamlit/stocks_algo_streamlit/st_dash/login/lotties/animation_lkkzs3nd.json")
+        #lt.lottie_select(file_path="D:/Arkonet Project/Project-06/Code/stocks_algo_streamlit/stocks_algo_streamlit/st_dash/login/lotties/animation_lkkzs3nd.json",quality="high")
 
-_="""
-def lottie_files(file_path=str):
-    with open(file=file_path,mode="r") as f:
-        return json.load(f)
 
-def lottie_select():
-    lottie_intro=lottie_files(file_path="styling/Lotti/hello.json")
-    return st_lottie(animation_data=lottie_intro,speed=1,reverse=False,loop=True,quality="low",height=600)
-"""
 
 _=""" 
     Creating Connection 
@@ -180,14 +200,16 @@ def main():
             lg_but_col=st.columns((1,1))
             with lg_but_col[1].expander("🙎‍♂️{}".format(st.session_state["username"])):
 
-                if authen.logout('Logout', 'main'):
-
-                    for key in st.session_state.keys():
-                        del st.session_state[key]
+                authen.logout('Logout', 'main')
+                #    for key in st.session_state.keys():
+                #        del st.session_state[key]
+                #        st.experimental_rerun()
 
         #authenticator = stauth.Authenticate(st.session_state["names"],st.session_state["usernames"],st.session_state["hashed_password"], "sfdb", "abcdef", cookie_expiry_days=30)
         elif not st.session_state["authentication_status"]:
-            
+            st.title("")
+            st.title("")
+
             if st.session_state["login"]==True or st.session_state["create_acc"]==False and st.session_state["forget_password"]==False and  st.session_state["reset_password"]==False:
                 
                 names, st.session_state['authentication_status'], username, st.session_state["authenticator"]=at.auth_func(st.session_state["emails"],st.session_state["usernames"],st.session_state["hashed_password"])
@@ -200,12 +222,11 @@ def main():
     
                     st.experimental_rerun()
 
-
                 elif st.session_state["authentication_status"]==False:
 
                     with col1[1]:
 
-                        sign_col=st.columns((1,1))
+                        sign_col=st.columns((1.7,1))
 
                         if len(username)>0:
 
@@ -219,7 +240,7 @@ def main():
 
                     with col1[1]:
 
-                        sign_col=st.columns((1,1))
+                        sign_col=st.columns((1.7,1))
 
                         st.session_state["forget_password"]=sign_col[0].button("Forget Password ?",on_click=forget_password_callback,use_container_width=True)
 
@@ -291,7 +312,7 @@ def main():
                             
                             st.experimental_rerun()
 
-                login_col=st.columns((1.3,1))    
+                login_col=st.columns((1.7,1))    
                 login_col[0].markdown("##### Already registerd?")  
 
                 if login_col[1].button("Login",use_container_width=True):

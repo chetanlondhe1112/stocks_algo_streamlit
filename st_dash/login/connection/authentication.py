@@ -37,7 +37,7 @@ class authenticate:
         user_table = self.tables['user_table']
         try:
             q="SELECT * FROM " + user_table
-            df = pd.read_sql_query(q,self.sql.engine)
+            df = pd.read_sql_query(q,self.engine)
             emails = list(df['email'])
             usernames = list(df['username'])
             hashed_passwords = list(df['password'])

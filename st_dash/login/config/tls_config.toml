@@ -1,7 +1,7 @@
 # The TLS17 project configuration file
 # This file is used for the database configuration ,Using this configuration file the-
 # -TLS17 algorithm can able store its live candlestick data into database, 
-# which is used trading algorithm to perform live trades using specific strategies.
+# which is used by trading algorithm to perform live trades using specific strategies.
 
 #----------------------------------------------------------------------------------------
 

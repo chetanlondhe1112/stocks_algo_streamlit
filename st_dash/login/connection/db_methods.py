@@ -123,4 +123,11 @@ class sqlmethods:
         else:
             return self.fetch_tables(order_table)
             
-    
+    def delete_row(self,table_name=str,condition=str):
+        d="DELETE FROM `"+table_name+"` WHERE '"+condition+"'"
+        print(d)
+        #try:
+        self.engine.execute(text(d))
+        #except Exception as e:
+        #    print(e)
+
