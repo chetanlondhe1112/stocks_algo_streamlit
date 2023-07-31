@@ -43,6 +43,7 @@ _=""" Creating Connection """
 # Session state objects of database connection 
 if "sq_connection_obj" not in st.session_state:         # session state SQL connection object         
     st.session_state["sq_connection_obj"]=0
+    
 if "sq_cur_obj" not in st.session_state:                           # session state SQL cursor object
     st.session_state["sq_cur_obj"]=0
 
