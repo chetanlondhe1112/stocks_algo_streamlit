@@ -102,9 +102,11 @@ def customer_data():
 def get_obj(customer_dict=dict):
 	obj=angelbrok_obj(apiky=apikey)
 	for i in customer_dict:
+
 		username = customer_dict[i]['angel_user']
 		pwd = customer_dict[i]["angel_pwd"]
 		totp_key=customer_dict[i]["totpkey"]
+
 		print(username,pwd,totp_key)
 		try:
 			totp,obj=angelbrok_login(angel_obj=obj,angel_user=username,angel_pwd=pwd,totp_key=totp_key)
@@ -138,7 +140,6 @@ def getTokenInfo (symbol,exch_seg ='NSE',instrumenttype='OPTIDX',strike_price = 
 		#print("\ntoken fetching NFO2\n",df[(df['exch_seg'] == 'NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry']).iloc[0])
 		return df[(df['exch_seg']=='NFO') & (df['expiry']==expiry_day) &  (df['instrumenttype'] == instrumenttype) & (df['name'] == symbol) & (df['strike'] == strike_price) & (df['symbol'].str.endswith(pe_ce))].sort_values(by=['expiry'])
 	
-
 def historic_data(object):
 	try:
 		historicParam={
@@ -205,7 +206,7 @@ def angel_place_order(obj,transaction_type, tsymbol, ttoken,fin_q): # Change Pro
 
 	orderparams = {"variety": "NORMAL", "tradingsymbol": tsymbol, "symboltoken": ttoken, "transactiontype": transaction_type, 
 	"exchange": exch_seg, "ordertype": "MARKET", "producttype": "CARRYFORWARD", "duration": "DAY", "price": "0", "squareoff": "0", 
-	"stoploss": "0", "quantity": fin_q }# only fin q will change as per customer need to put in loop for every customer
+	"stoploss": "0", "quantity": fin_q}# only fin q will change as per customer need to put in loop for every customer
 
 	name=obj
 	# pdb.set_trace()
@@ -303,7 +304,9 @@ def get_symbol(bnf_ltp):
 all_cust=customer_data()
 
 all_cust=get_obj(customer_dict=all_cust)	#updated dictionary with objects
+
 obj_list,obj_dict=obj_ls_di(cus_obj_dict=all_cust)
+
 print(obj_dict)
 bnf_ltp = obj_dict['Ashok'].ltpData("NSE", "BANKNIFTY", "26009")['data']['ltp']
 bnf_dic_log_df=pd.DataFrame(data={"date":dt.datetime.now(),"bnf_ltp":bnf_ltp},index=[0])
@@ -311,7 +314,7 @@ print(bnf_dic_log_df)
 
 bnf_dic_log_df.to_csv(path_or_buf="D:/Arkonet Project/Project-06/Code/stocks_algo_streamlit/stocks_algo_streamlit/st_dash/login/csv/ltp_data.csv",mode='a',header=False,index=False)
 #D:\Arkonet Project\Project-06\Code\stocks_algo_streamlit\stocks_algo_streamlit\st_dash\login\csv
-# Entry conditions read
+#Entry conditions read
 #entry_con_df = pd.read_csv('Entry_conditions.csv', index_col=0)
 entry_con_df=sql.fetch_tables(entry_conditions)
 entry_con_df['Start Date']=pd.to_datetime(entry_con_df['Start Date'])
@@ -465,7 +468,7 @@ while True:
 			ang_user=get_key(obj)	
 			print(obj)
 			fin_q=all_cust[ang_user]['fin_q']
-			#angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
+			angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
 			time.sleep(3)
 			order_status(obj=obj)
 		break
@@ -476,7 +479,7 @@ while True:
 			ang_user=get_key(obj)	
 			print(obj)
 			fin_q=all_cust[ang_user]['fin_q']
-			#angel_place_order(obj,"BUY", PE_Symbol, PE_Token,fin_q=fin_q)
+			angel_place_order(obj,"BUY", PE_Symbol, PE_Token,fin_q=fin_q)
 
 			#angel_place_order(obj,"BUY", CE_Symbol, CE_Token,fin_q=fin_q)
 			time.sleep(3)
