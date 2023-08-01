@@ -47,10 +47,10 @@ if "sq_connection_obj" not in st.session_state:         # session state SQL conn
 if "sq_cur_obj" not in st.session_state:                           # session state SQL cursor object
     st.session_state["sq_cur_obj"]=0
 
-with col1[1]:
+with #col1[1]:
     if not st.session_state["sq_cur_obj"]:  
         
-        reconnection()                                       # Check the SQL cursor object is present is session state or not
+        #reconnection()                                       # Check the SQL cursor object is present is session state or not
         st.write("Welcome")
     else:
         sq_conn=st.session_state["sq_connection_obj"]
